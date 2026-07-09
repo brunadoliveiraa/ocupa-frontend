@@ -3,3 +3,11 @@
 @source "../.flowbite-react/class-list.json";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+body {
+  font-family: 'Outfit', sans-serif;
+}
+
+.leaflet-container {
+  z-index: 1;
+}
