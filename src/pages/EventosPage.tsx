@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 declare const L: any;
 
-export default function EventosPage() {
+export default function EventosPage({ user }: { user: any }) {
   const [eventos, setEventos] = useState<any[]>([]);
   const [artistas, setArtistas] = useState<any[]>([]);
   const [espacos, setEspacos] = useState<any[]>([]);
@@ -165,7 +165,8 @@ export default function EventosPage() {
       espaco: espacoObj ? { id: espacoObj.id } : null,
       // If event coordinates are not typed, inherit them from associated space
       latitude: espacoObj?.latitude || null,
-      longitude: espacoObj?.longitude || null
+      longitude: espacoObj?.longitude || null,
+      criadoPorEmail: isEditing ? selected.criadoPorEmail : (user ? user.email : null)
     };
 
     const method = isEditing ? "PUT" : "POST";
@@ -210,9 +211,11 @@ export default function EventosPage() {
               Gerencie a agenda do ecossistema: batalhas de rima, saraus, festivais e mostras culturais.
             </p>
           </div>
-          <Button color="purple" onClick={() => { isEditing ? resetForm() : setShowForm(!showForm); }}>
-            {showForm ? "Esconder Formulário" : "Agendar Novo Evento"}
-          </Button>
+          {user && (
+            <Button color="purple" onClick={() => { isEditing ? resetForm() : setShowForm(!showForm); }}>
+              {showForm ? "Esconder Formulário" : "Agendar Novo Evento"}
+            </Button>
+          )}
         </div>
 
         {/* Form panel */}
@@ -346,10 +349,12 @@ export default function EventosPage() {
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex gap-2 justify-end">
-                      <Button size="xs" color="gray" onClick={() => fillForm(evento)}>Editar</Button>
-                      <Button size="xs" color="failure" onClick={() => handleDelete(evento.id)}>Excluir</Button>
-                    </div>
+                    {user && (user.role === "ADMIN" || user.email === evento.criadoPorEmail) && (
+                      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex gap-2 justify-end">
+                        <Button size="xs" color="gray" onClick={() => fillForm(evento)}>Editar</Button>
+                        <Button size="xs" color="failure" onClick={() => handleDelete(evento.id)}>Excluir</Button>
+                      </div>
+                    )}
                   </Card>
                 );
               })

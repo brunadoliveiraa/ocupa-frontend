@@ -68,11 +68,11 @@ export default function App() {
       case "artistas":
         return <ArtistasPage user={user} />;
       case "espacos":
-        return <EspacosPage />;
+        return <EspacosPage user={user} />;
       case "eventos":
-        return <EventosPage />;
+        return <EventosPage user={user} />;
       case "oportunidades":
-        return <OportunidadesPage />;
+        return <OportunidadesPage user={user} />;
       case "painel":
         return <PainelPage user={user} />;
       case "login":

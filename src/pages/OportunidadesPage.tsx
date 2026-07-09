@@ -3,7 +3,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-export default function OportunidadesPage() {
+export default function OportunidadesPage({ user }: { user: any }) {
   const [oportunidades, setOportunidades] = useState<any[]>([]);
   const [selected, setSelected] = useState<any | null>(null);
   
@@ -78,7 +78,17 @@ export default function OportunidadesPage() {
     event.preventDefault();
     setError(null);
 
-    const payload = { titulo, tipo, descricao, local, dataInicio, dataFim, inscricaoLink, contato };
+    const payload = { 
+      titulo, 
+      tipo, 
+      descricao, 
+      local, 
+      dataInicio, 
+      dataFim, 
+      inscricaoLink, 
+      contato,
+      criadoPorEmail: isEditing ? selected.criadoPorEmail : (user ? user.email : null)
+    };
     const method = isEditing ? "PUT" : "POST";
     const url = isEditing ? `${API_URL}/api/oportunidades/${selected.id}` : `${API_URL}/api/oportunidades`;
 
@@ -121,9 +131,11 @@ export default function OportunidadesPage() {
               Explore bolsas de residência artística, chamadas abertas e editais de incentivo cultural.
             </p>
           </div>
-          <Button color="amber" onClick={() => { isEditing ? resetForm() : setShowForm(!showForm); }}>
-            {showForm ? "Esconder Formulário" : "Publicar Oportunidade"}
-          </Button>
+          {user && (
+            <Button color="amber" onClick={() => { isEditing ? resetForm() : setShowForm(!showForm); }}>
+              {showForm ? "Esconder Formulário" : "Publicar Oportunidade"}
+            </Button>
+          )}
         </div>
 
         {/* Form panel */}
@@ -263,10 +275,12 @@ export default function OportunidadesPage() {
                   </div>
 
                   <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap gap-2 justify-between items-center">
-                    <div className="flex gap-2">
-                      <Button size="xs" color="gray" onClick={() => fillForm(item)}>Editar</Button>
-                      <Button size="xs" color="failure" onClick={() => handleDelete(item.id)}>Excluir</Button>
-                    </div>
+                    {user && (user.role === "ADMIN" || user.email === item.criadoPorEmail) ? (
+                      <div className="flex gap-2">
+                        <Button size="xs" color="gray" onClick={() => fillForm(item)}>Editar</Button>
+                        <Button size="xs" color="failure" onClick={() => handleDelete(item.id)}>Excluir</Button>
+                      </div>
+                    ) : <div />}
 
                     {item.inscricaoLink && (
                       <Button size="sm" color="amber">

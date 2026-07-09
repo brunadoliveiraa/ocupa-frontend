@@ -6,7 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 // Declare Leaflet global object
 declare const L: any;
 
-export default function EspacosPage() {
+export default function EspacosPage({ user }: { user: any }) {
   const [espacos, setEspacos] = useState<any[]>([]);
   const [selected, setSelected] = useState<any | null>(null);
   
@@ -167,6 +167,7 @@ export default function EspacosPage() {
       permiteDanca,
       latitude: parseFloat(latitude),
       longitude: parseFloat(longitude),
+      criadoPorEmail: isEditing ? selected.criadoPorEmail : (user ? user.email : null)
     };
 
     const method = isEditing ? "PUT" : "POST";
@@ -211,9 +212,11 @@ export default function EspacosPage() {
               Locais públicos, praças e pontos mapeados para intervenções artísticas periféricas.
             </p>
           </div>
-          <Button color="emerald" onClick={() => { isEditing ? resetForm() : setShowForm(!showForm); }}>
-            {showForm ? "Esconder Formulário" : "Mapear Novo Espaço"}
-          </Button>
+          {user && (
+            <Button color="emerald" onClick={() => { isEditing ? resetForm() : setShowForm(!showForm); }}>
+              {showForm ? "Esconder Formulário" : "Mapear Novo Espaço"}
+            </Button>
+          )}
         </div>
 
         {/* Form panel */}
@@ -328,10 +331,12 @@ export default function EspacosPage() {
                     {espaco.permiteDanca && <Badge color="success" size="xs">Dança</Badge>}
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex gap-2">
-                    <Button size="xs" color="gray" onClick={() => fillForm(espaco)}>Editar</Button>
-                    <Button size="xs" color="failure" onClick={() => handleDelete(espaco.id)}>Excluir</Button>
-                  </div>
+                  {user && (user.role === "ADMIN" || user.email === espaco.criadoPorEmail) && (
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex gap-2">
+                      <Button size="xs" color="gray" onClick={() => fillForm(espaco)}>Editar</Button>
+                      <Button size="xs" color="failure" onClick={() => handleDelete(espaco.id)}>Excluir</Button>
+                    </div>
+                  )}
                 </Card>
               ))
             ) : (
