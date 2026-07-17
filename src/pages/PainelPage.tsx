@@ -3,6 +3,15 @@ import { useEffect, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
+const convertToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 interface PainelPageProps {
   user: any;
 }
@@ -12,6 +21,11 @@ export default function PainelPage({ user }: PainelPageProps) {
   const [portfolio, setPortfolio] = useState<any>(null);
   const [requests, setRequests] = useState<any[]>([]);
   const [analytics, setAnalytics] = useState<any[]>([]);
+  
+  // Artist states
+  const [artista, setArtista] = useState<any>(null);
+  const [cidade, setCidade] = useState("");
+  const [fotoUrl, setFotoUrl] = useState("");
   
   // Form portfolio states
   const [headline, setHeadline] = useState("");
@@ -32,6 +46,7 @@ export default function PainelPage({ user }: PainelPageProps) {
       fetchPortfolio();
       fetchRequestsForProvider();
       fetchAnalytics();
+      fetchArtista();
     } else if (user?.email) {
       fetchRequestsForRequester();
     }
@@ -53,6 +68,20 @@ export default function PainelPage({ user }: PainelPageProps) {
       }
     } catch (err) {
       console.error("Erro ao carregar portfólio:", err);
+    }
+  }
+
+  async function fetchArtista() {
+    try {
+      const response = await fetch(`${API_URL}/api/artistas/${user.artistaId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setArtista(data);
+        setCidade(data.cidade || "");
+        setFotoUrl(data.fotoUrl || "");
+      }
+    } catch (err) {
+      console.error("Erro ao carregar detalhes do artista:", err);
     }
   }
 
@@ -99,16 +128,37 @@ export default function PainelPage({ user }: PainelPageProps) {
     setError(null);
     setSuccess(null);
 
-    const payload = {
-      id: portfolio?.id || undefined,
-      artista: { id: user.artistaId },
-      headline,
-      about,
-      contacts,
-      mediaItems: mediaList
-    };
-
     try {
+      // 1. Salvar informações do artista (cidade, fotoUrl)
+      const artistPayload = {
+        ...artista,
+        cidade,
+        fotoUrl
+      };
+
+      const artistResponse = await fetch(`${API_URL}/api/artistas/${user.artistaId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(artistPayload)
+      });
+
+      if (!artistResponse.ok) {
+        throw new Error("Erro ao salvar informações do artista");
+      }
+      
+      const updatedArtista = await artistResponse.json();
+      setArtista(updatedArtista);
+
+      // 2. Salvar portfólio
+      const payload = {
+        id: portfolio?.id || undefined,
+        artista: { id: user.artistaId },
+        headline,
+        about,
+        contacts,
+        mediaItems: mediaList
+      };
+
       const method = portfolio?.id ? "PUT" : "POST";
       const url = portfolio?.id ? `${API_URL}/api/portfolios/${portfolio.id}` : `${API_URL}/api/portfolios`;
 
@@ -124,7 +174,7 @@ export default function PainelPage({ user }: PainelPageProps) {
 
       const data = await response.json();
       setPortfolio(data);
-      setSuccess("Portfólio salvo com sucesso!");
+      setSuccess("Portfólio e perfil atualizados com sucesso!");
     } catch (err: any) {
       setError(err.message || "Erro de conexão ao salvar portfólio");
     }
@@ -287,6 +337,46 @@ export default function PainelPage({ user }: PainelPageProps) {
           <Card>
             <form onSubmit={handleSavePortfolio} className="space-y-6">
               <h2 className="text-xl font-bold border-b pb-2">Informações Profissionais</h2>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <div>
+                  <Label htmlFor="cidade">Cidade do Artista</Label>
+                  <TextInput
+                    id="cidade"
+                    placeholder="Ex: São Paulo"
+                    value={cidade}
+                    onChange={(e) => setCidade(e.target.value)}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="foto">Foto de Perfil do Artista</Label>
+                  <input
+                    id="foto"
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const base64 = await convertToBase64(file);
+                          setFotoUrl(base64);
+                        } catch (err) {
+                          console.error("Erro ao converter foto:", err);
+                        }
+                      }
+                    }}
+                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 bg-white border border-slate-300 rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300"
+                  />
+                  {fotoUrl && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-xs text-slate-500">Visualização:</span>
+                      <img src={fotoUrl} alt="Visualização" className="h-10 w-10 object-cover rounded-full border border-slate-200" />
+                    </div>
+                  )}
+                </div>
+              </div>
               
               <div>
                 <Label htmlFor="headline">Headline / Slogan Profissional</Label>
@@ -335,13 +425,32 @@ export default function PainelPage({ user }: PainelPageProps) {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="mediaUrl">URL da Mídia</Label>
-                    <TextInput
-                      id="mediaUrl"
-                      placeholder="https://exemplo.com/imagem.jpg"
-                      value={newMediaUrl}
-                      onChange={(e) => setNewMediaUrl(e.target.value)}
-                    />
+                    <Label htmlFor="mediaUrl">{newMediaType === "IMAGE" ? "Carregar Imagem" : "URL da Mídia"}</Label>
+                    {newMediaType === "IMAGE" ? (
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              const base64 = await convertToBase64(file);
+                              setNewMediaUrl(base64);
+                            } catch (err) {
+                              console.error("Erro ao converter mídia:", err);
+                            }
+                          }
+                        }}
+                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 bg-white border border-slate-300 rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300"
+                      />
+                    ) : (
+                      <TextInput
+                        id="mediaUrl"
+                        placeholder={newMediaType === "VIDEO" ? "https://youtube.com/..." : "https://soundcloud.com/..."}
+                        value={newMediaUrl}
+                        onChange={(e) => setNewMediaUrl(e.target.value)}
+                      />
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="mediaCaption">Legenda</Label>

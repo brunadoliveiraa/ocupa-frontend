@@ -9,6 +9,7 @@ interface ArtistasPageProps {
 
 export default function ArtistasPage({ user }: ArtistasPageProps) {
   const [artistas, setArtistas] = useState<any[]>([]);
+  const [portfolios, setPortfolios] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [selectedArtista, setSelectedArtista] = useState<any | null>(null);
   const [portfolio, setPortfolio] = useState<any | null>(null);
@@ -27,13 +28,18 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
 
   async function fetchAll() {
     try {
-      const response = await fetch(`${API_URL}/api/artistas`);
-      if (response.ok) {
-        const data = await response.json();
-        setArtistas(data);
+      const [rArtistas, rPortfolios] = await Promise.all([
+        fetch(`${API_URL}/api/artistas`),
+        fetch(`${API_URL}/api/portfolios`)
+      ]);
+      if (rArtistas.ok) {
+        setArtistas(await rArtistas.json());
+      }
+      if (rPortfolios.ok) {
+        setPortfolios(await rPortfolios.json());
       }
     } catch (err) {
-      console.error("Erro ao buscar artistas:", err);
+      console.error("Erro ao buscar artistas e portfólios:", err);
     }
   }
 
@@ -157,6 +163,7 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredArtistas.map((artista) => {
               const isCurrentUser = user?.artistaId === artista.id;
+              const artistPortfolio = portfolios.find(p => p.artista?.id === artista.id);
               
               return (
                 <Card
@@ -186,7 +193,7 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
                     </div>
 
                     <p className="text-slate-600 dark:text-slate-300 text-sm line-clamp-3">
-                      {artista.biografia || "Biografia não informada."}
+                      {artistPortfolio?.about || "Biografia não informada."}
                     </p>
                   </div>
 
@@ -254,13 +261,13 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
 
                 <div className="space-y-2">
                   <h3 className="font-bold text-sm uppercase text-slate-500 tracking-wider">Contato</h3>
-                  {selectedArtista.contato ? (
+                  {portfolio?.contacts ? (
                     <a
-                      href={`mailto:${selectedArtista.contato}`}
+                      href={`mailto:${portfolio.contacts}`}
                       onClick={() => trackEvent(selectedArtista.id, "contact_click")}
                       className="text-indigo-600 hover:underline text-sm block"
                     >
-                      {selectedArtista.contato}
+                      {portfolio.contacts}
                     </a>
                   ) : (
                     <p className="text-sm text-slate-500 italic">Não informado</p>
@@ -282,7 +289,7 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
                     {portfolio?.headline || "Artista / Empreendedor Criativo"}
                   </h3>
                   <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
-                    {portfolio?.about || selectedArtista.biografia || "Nenhuma informação detalhada fornecida ainda."}
+                    {portfolio?.about || "Nenhuma informação detalhada fornecida ainda."}
                   </p>
                 </div>
 

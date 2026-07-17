@@ -192,7 +192,7 @@ Certifique-se de ter instalado em sua máquina:
    ```bash
    cd ocupa-backend
    ```
-2. Configure as credenciais de acesso ao seu MySQL local no arquivo [application.properties](file:///c:/Users/bruna/Desktop/Projeto Final - Bruna/ocupa-backend/src/main/resources/application.properties) (substituindo o nome do usuário e senha do banco conforme necessário).
+2. Configure as credenciais de acesso ao seu MySQL local no arquivo [application.properties](/ocupa-backend/src/main/resources/application.properties) (substituindo o nome do usuário e senha do banco conforme necessário).
 3. Execute o comando Maven para baixar as dependências e iniciar o servidor de desenvolvimento:
    * **Windows**:
      ```powershell
