@@ -28,7 +28,20 @@ export default function EspacosPage({ user }: { user: any }) {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-    useEffect(() => {
+  // Space media states
+  const [mediaList, setMediaList] = useState<{ mediaType: string; url: string; caption: string }[]>([]);
+  const [newMediaCaption, setNewMediaCaption] = useState("");
+
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  useEffect(() => {
     fetchAll();
   }, []);
 
@@ -125,6 +138,8 @@ export default function EspacosPage({ user }: { user: any }) {
     setLongitude("-46.633308");
     setError(null);
     setShowForm(false);
+    setMediaList([]);
+    setNewMediaCaption("");
   }
 
   function fillForm(espaco: any) {
@@ -142,6 +157,7 @@ export default function EspacosPage({ user }: { user: any }) {
     setPermiteDanca(espaco.permiteDanca || false);
     setLatitude(espaco.latitude?.toString() || "-23.55052");
     setLongitude(espaco.longitude?.toString() || "-46.633308");
+    setMediaList(espaco.mediaItems || []);
     setError(null);
     setShowForm(true);
     
@@ -167,7 +183,8 @@ export default function EspacosPage({ user }: { user: any }) {
       permiteDanca,
       latitude: parseFloat(latitude),
       longitude: parseFloat(longitude),
-      criadoPorEmail: isEditing ? selected.criadoPorEmail : (user ? user.email : null)
+      criadoPorEmail: isEditing ? selected.criadoPorEmail : (user ? user.email : null),
+      mediaItems: mediaList
     };
 
     const method = isEditing ? "PUT" : "POST";
@@ -284,6 +301,69 @@ export default function EspacosPage({ user }: { user: any }) {
                 </div>
               </div>
 
+              {/* Media gallery upload for Espaco */}
+              <div className="lg:col-span-2 space-y-4 border-t pt-4">
+                <h3 className="font-semibold text-md text-emerald-600 dark:text-emerald-400">Galeria de Fotos do Local</h3>
+                <div className="grid gap-3 sm:grid-cols-3 items-end bg-slate-100 dark:bg-slate-900/40 p-4 rounded-lg">
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="spaceFile">Adicionar Imagem</Label>
+                    <input
+                      id="spaceFile"
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          try {
+                            const base64 = await convertToBase64(file);
+                            setMediaList([...mediaList, { mediaType: "IMAGE", url: base64, caption: newMediaCaption }]);
+                            setNewMediaCaption("");
+                            e.target.value = "";
+                          } catch (err) {
+                            console.error("Erro ao converter imagem do espaco:", err);
+                          }
+                        }
+                      }}
+                      className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 bg-white border border-slate-300 rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="spaceMediaCaption">Legenda da Imagem (Opcional)</Label>
+                    <TextInput
+                      id="spaceMediaCaption"
+                      placeholder="Ex: Fachada, Palco, etc."
+                      value={newMediaCaption}
+                      onChange={(e) => setNewMediaCaption(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {mediaList.length > 0 ? (
+                  <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 md:grid-cols-6 mt-4">
+                    {mediaList.map((item, idx) => (
+                      <Card key={idx} className="relative overflow-hidden group p-2 border-slate-200 dark:border-slate-800">
+                        <div className="h-20 bg-slate-200 dark:bg-slate-800 flex items-center justify-center rounded overflow-hidden">
+                          <img src={item.url} alt={item.caption} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="mt-1">
+                          <p className="font-semibold text-xs truncate text-slate-700 dark:text-slate-300">{item.caption || "Sem legenda"}</p>
+                          <Button
+                            size="xs"
+                            color="failure"
+                            className="mt-1 w-full"
+                            onClick={() => setMediaList(mediaList.filter((_, i) => i !== idx))}
+                          >
+                            Remover
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500 italic">Nenhuma foto anexada a este espaço.</p>
+                )}
+              </div>
+
               {error && <Alert color="failure" className="lg:col-span-2">{error}</Alert>}
 
               <div className="lg:col-span-2 flex gap-3 pt-2">
@@ -320,6 +400,22 @@ export default function EspacosPage({ user }: { user: any }) {
                   <p className="text-slate-600 dark:text-slate-400 text-xs line-clamp-2 mt-2">
                     {espaco.descricao || "Sem descrição cadastrada."}
                   </p>
+
+                  {/* Space media items compact gallery */}
+                  {espaco.mediaItems && espaco.mediaItems.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 mt-3">
+                      {espaco.mediaItems.map((media: any) => (
+                        <div key={media.id} className="h-16 rounded overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 relative group">
+                          <img src={media.url} alt={media.caption} className="w-full h-full object-cover" />
+                          {media.caption && (
+                            <div className="absolute inset-x-0 bottom-0 bg-black/60 text-white text-[10px] truncate p-1 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              {media.caption}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="flex flex-wrap gap-1 mt-3">
                     {espaco.cobertura && <Badge color="indigo" size="xs">Coberto</Badge>}

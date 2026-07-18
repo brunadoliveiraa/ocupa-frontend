@@ -3,8 +3,6 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-declare const L: any;
-
 export default function EventosPage({ user }: { user: any }) {
   const [eventos, setEventos] = useState<any[]>([]);
   const [artistas, setArtistas] = useState<any[]>([]);
@@ -20,9 +18,14 @@ export default function EventosPage({ user }: { user: any }) {
   const [publicoEstimado, setPublicoEstimado] = useState(0);
   const [selectedArtistaId, setSelectedArtistaId] = useState("");
   const [selectedEspacoId, setSelectedEspacoId] = useState("");
+  const [fotoUrl, setFotoUrl] = useState("");
   
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+
+  // Filter tab and modal details states
+  const [activePeriod, setActivePeriod] = useState<string>("");
+  const [detailEvent, setDetailEvent] = useState<any | null>(null);
 
   useEffect(() => {
     fetchAll();
@@ -42,64 +45,56 @@ export default function EventosPage({ user }: { user: any }) {
     }
   }
 
-  // Initialize and Update Map
-  useEffect(() => {
-    const mapElement = document.getElementById("event-map");
-    if (!mapElement || typeof L === "undefined") return;
-
-    // Create Map centered in Sao Paulo (default)
-    const map = L.map("event-map").setView([-23.55052, -46.633308], 13);
+  function getPeriodLabel(periodStr: string) {
+    if (!periodStr) return "";
+    const [yearStr, monthStr] = periodStr.split("-");
+    const year = parseInt(yearStr);
+    const date = new Date(year, parseInt(monthStr) - 1, 1);
+    const monthLabel = date.toLocaleDateString("pt-BR", { month: "short" }).toUpperCase().replace(".", "");
     
-    // Load OpenStreetMap tiles
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
-    }).addTo(map);
+    const currentYear = new Date().getFullYear();
+    if (year !== currentYear) {
+      const shortYear = yearStr.substring(2);
+      return `${monthLabel} '${shortYear}`;
+    }
+    return monthLabel;
+  }
 
-    // Custom pins for events (styled purple with Tailwind CSS)
-    const eventIcon = L.divIcon({
-      html: `<div class="w-8 h-8 bg-purple-600 hover:bg-purple-700 border-2 border-white rounded-full shadow-lg flex items-center justify-center text-white transition-all transform hover:scale-115">
-               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-               </svg>
-             </div>`,
-      className: "custom-leaflet-event-pin",
-      iconSize: [32, 32],
-      iconAnchor: [16, 32]
-    });
-
-    // Populate markers on map based on event locations (inherited from associated spaces)
-    eventos.forEach((evento) => {
-      // Coordinate fallback: event coordinates OR associated space coordinates
-      const lat = evento.latitude || evento.espaco?.latitude;
-      const lng = evento.longitude || evento.espaco?.longitude;
-
-      if (lat && lng) {
-        L.marker([lat, lng], { icon: eventIcon })
-          .addTo(map)
-          .bindPopup(
-            `<div class="p-2 space-y-1">
-              <h4 class="font-bold text-slate-800 text-sm">${evento.nome}</h4>
-              <p class="text-xs text-indigo-600 font-semibold">${evento.dataEvento} às ${evento.horaEvento.substring(0, 5)}</p>
-              <p class="text-xs text-slate-600">${evento.local || evento.espaco?.nome || "Espaço periférico"}</p>
-             </div>`
-          );
+  const availablePeriods = useMemo(() => {
+    const periodsSet = new Set<string>();
+    eventos.forEach(ev => {
+      if (ev.dataEvento) {
+        const date = new Date(ev.dataEvento + "T00:00:00");
+        const y = date.getFullYear();
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        periodsSet.add(`${y}-${m}`);
       }
     });
-
-    // Adjust bounds
-    const validCoords = eventos
-      .map(ev => [ev.latitude || ev.espaco?.latitude, ev.longitude || ev.espaco?.longitude])
-      .filter(coords => coords[0] && coords[1]);
-
-    if (validCoords.length > 0) {
-      map.fitBounds(validCoords, { padding: [50, 50], maxZoom: 15 });
+    if (periodsSet.size === 0) {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = (now.getMonth() + 1).toString().padStart(2, '0');
+      periodsSet.add(`${y}-${m}`);
     }
-
-    // Cleanup Leaflet map when component unmounts
-    return () => {
-      map.remove();
-    };
+    return Array.from(periodsSet).sort();
   }, [eventos]);
+
+  useEffect(() => {
+    if (availablePeriods.length > 0 && (!activePeriod || !availablePeriods.includes(activePeriod))) {
+      setActivePeriod(availablePeriods[0]);
+    }
+  }, [availablePeriods, activePeriod]);
+
+  const filteredEventos = useMemo(() => {
+    if (!activePeriod) return eventos;
+    return eventos.filter(ev => {
+      if (!ev.dataEvento) return false;
+      const date = new Date(ev.dataEvento + "T00:00:00");
+      const y = date.getFullYear();
+      const m = (date.getMonth() + 1).toString().padStart(2, '0');
+      return `${y}-${m}` === activePeriod;
+    });
+  }, [eventos, activePeriod]);
 
   async function fetchAll() {
     try {
@@ -126,6 +121,7 @@ export default function EventosPage({ user }: { user: any }) {
     setPublicoEstimado(0);
     setSelectedArtistaId("");
     setSelectedEspacoId("");
+    setFotoUrl("");
     setError(null);
     setShowForm(false);
   }
@@ -140,6 +136,7 @@ export default function EventosPage({ user }: { user: any }) {
     setPublicoEstimado(evento.publicoEstimado || 0);
     setSelectedArtistaId(evento.artista?.id?.toString() || "");
     setSelectedEspacoId(evento.espaco?.id?.toString() || "");
+    setFotoUrl(evento.fotoUrl || "");
     setError(null);
     setShowForm(true);
     
@@ -163,9 +160,9 @@ export default function EventosPage({ user }: { user: any }) {
       publicoEstimado,
       artista: artistaObj ? { id: artistaObj.id } : null,
       espaco: espacoObj ? { id: espacoObj.id } : null,
-      // If event coordinates are not typed, inherit them from associated space
       latitude: espacoObj?.latitude || null,
       longitude: espacoObj?.longitude || null,
+      fotoUrl,
       criadoPorEmail: isEditing ? selected.criadoPorEmail : (user ? user.email : null)
     };
 
@@ -204,17 +201,39 @@ export default function EventosPage({ user }: { user: any }) {
       <div className="mx-auto max-w-7xl space-y-8">
         
         {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Agenda Cultural</h1>
-            <p className="text-slate-600 dark:text-slate-400">
-              Gerencie a agenda do ecossistema: batalhas de rima, saraus, festivais e mostras culturais.
-            </p>
+        <div className="flex flex-col gap-4 border-b border-slate-200 dark:border-slate-800 pb-0">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Agenda Cultural</h1>
+              <p className="text-slate-600 dark:text-slate-400 font-medium">
+                Gerencie a agenda do ecossistema: batalhas de rima, saraus, festivais e mostras culturais.
+              </p>
+            </div>
+            {user && (
+              <Button color="purple" onClick={() => { isEditing ? resetForm() : setShowForm(!showForm); }}>
+                {showForm ? "Esconder Formulário" : "Agendar Novo Evento"}
+              </Button>
+            )}
           </div>
-          {user && (
-            <Button color="purple" onClick={() => { isEditing ? resetForm() : setShowForm(!showForm); }}>
-              {showForm ? "Esconder Formulário" : "Agendar Novo Evento"}
-            </Button>
+          
+          {availablePeriods.length > 0 && (
+            <div className="flex justify-end w-full">
+              <div className="flex gap-2">
+                {availablePeriods.map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setActivePeriod(p)}
+                    className={`px-4 py-3 text-sm font-bold uppercase transition-all border-b-2 -mb-[2px] ${
+                      activePeriod === p
+                        ? "border-purple-600 text-purple-600 dark:text-purple-400 font-extrabold"
+                        : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    {getPeriodLabel(p)}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
@@ -257,6 +276,37 @@ export default function EventosPage({ user }: { user: any }) {
                     onChange={(e) => setPublicoEstimado(Number(e.target.value))}
                   />
                 </div>
+
+                <div>
+                  <Label htmlFor="eventFoto">Foto / Capa de Título do Evento</Label>
+                  <input
+                    id="eventFoto"
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const base64 = await new Promise<string>((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.readAsDataURL(file);
+                            reader.onload = () => resolve(reader.result as string);
+                            reader.onerror = reject;
+                          });
+                          setFotoUrl(base64);
+                        } catch (err) {
+                          console.error("Erro ao converter imagem do evento:", err);
+                        }
+                      }
+                    }}
+                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 bg-white border border-slate-300 rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300"
+                  />
+                  {fotoUrl && (
+                    <div className="mt-2 h-20 w-32 rounded overflow-hidden border border-slate-200 dark:border-slate-800">
+                      <img src={fotoUrl} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -296,73 +346,139 @@ export default function EventosPage({ user }: { user: any }) {
           </Card>
         )}
 
-        {/* Map and Directory Container */}
-        <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-          {/* Map display */}
-          <Card className="p-0 overflow-hidden border-slate-200 dark:border-slate-800">
-            <h3 className="text-lg font-bold p-4 border-b">Distribuição Geográfica dos Eventos (Mapeamento Afetivo)</h3>
-            <div id="event-map" className="w-full h-[450px] rounded-b-lg"></div>
-          </Card>
+        {/* Directory Container */}
+        <div className="space-y-6">
+          <h3 className="text-xl font-extrabold tracking-tight text-slate-800 dark:text-slate-200">
+            Programação do Mês
+          </h3>
 
-          {/* Events directory */}
-          <div className="space-y-4 max-h-[520px] overflow-y-auto pr-2">
-            <h3 className="text-lg font-bold border-b pb-2">Programação (Linha do Tempo)</h3>
-            
-            {eventos.length > 0 ? (
-              eventos.map((evento) => {
-                const dateParsed = new Date(evento.dataEvento).toLocaleDateString("pt-BR", {
-                  weekday: "short",
-                  day: "2-digit",
-                  month: "short"
-                });
-                
+          {filteredEventos.length > 0 ? (
+            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {filteredEventos.map((evento) => {
+                const dateObj = new Date(evento.dataEvento + "T00:00:00");
+                const day = dateObj.getDate().toString().padStart(2, '0');
+                const monthShort = dateObj.toLocaleDateString("pt-BR", { month: "short" }).toUpperCase().replace(".", "");
+                const dateFormatted = `${day}.${monthShort}`;
+
                 return (
-                  <Card key={evento.id} className="border-slate-200 dark:border-slate-800 shadow-sm hover:shadow">
-                    <div className="flex items-start gap-4">
-                      {/* Date badge */}
-                      <div className="flex flex-col items-center justify-center bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400 p-3 rounded-lg font-bold min-w-16">
-                        <span className="text-xs uppercase">{dateParsed.split(" ")[0]}</span>
-                        <span className="text-xl">{dateParsed.split(" ")[1]}</span>
+                  <Card key={evento.id} className="border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col h-full p-0 overflow-hidden">
+                    <div className="p-4 flex flex-col h-full space-y-3">
+                      {/* 1. Date above image */}
+                      <span className="text-sm font-extrabold text-slate-500 tracking-wider">
+                        {dateFormatted}
+                      </span>
+
+                      {/* 2. Cover image */}
+                      <div className="h-40 w-full rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 relative">
+                        {evento.fotoUrl ? (
+                          <img src={evento.fotoUrl} alt={evento.nome} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-purple-500/25 to-pink-500/25 flex items-center justify-center text-purple-600 dark:text-purple-400 font-semibold text-xs">
+                            Sem Foto de Capa
+                          </div>
+                        )}
                       </div>
 
-                      <div className="flex-1 min-w-0">
-                        <h2 className="text-lg font-bold leading-tight">{evento.nome}</h2>
-                        <p className="text-xs text-slate-500 font-semibold mt-1">
-                          Hora: {evento.horaEvento.substring(0, 5)} | Público Est.: {evento.publicoEstimado || 0}
-                        </p>
-                        
-                        {evento.espaco && (
-                          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
-                            Local: {evento.espaco.nome}
-                          </p>
-                        )}
-                        
-                        {evento.artista && (
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            Organizado por: <span className="font-semibold text-slate-600 dark:text-slate-300">{evento.artista.nome}</span>
-                          </p>
-                        )}
+                      {/* 3. Title below image */}
+                      <h4 className="text-md font-extrabold text-slate-900 dark:text-white leading-snug line-clamp-2">
+                        {evento.espaco ? `${evento.espaco.nome} | ` : ""}{evento.nome}
+                      </h4>
 
-                        <p className="text-slate-600 dark:text-slate-400 text-xs mt-3 bg-slate-100 dark:bg-slate-900 p-2 rounded whitespace-pre-line">
-                          {evento.descricao || "Sem descrição."}
-                        </p>
+                      {/* 4. Description below title */}
+                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed flex-grow">
+                        {evento.descricao || "Sem descrição disponível."}
+                      </p>
+
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate italic">
+                        {evento.local || (evento.espaco ? evento.espaco.endereco : "")}
+                      </p>
+
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex flex-col gap-2">
+                        <Button size="xs" color="purple" className="w-full font-bold" onClick={() => setDetailEvent(evento)}>
+                          Ver Detalhes
+                        </Button>
+                        {user && (user.role === "ADMIN" || user.email === evento.criadoPorEmail) && (
+                          <div className="flex gap-2">
+                            <Button size="xs" color="gray" className="flex-1" onClick={() => fillForm(evento)}>
+                              Editar
+                            </Button>
+                            <Button size="xs" color="failure" className="flex-1" onClick={() => handleDelete(evento.id)}>
+                              Excluir
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
-
-                    {user && (user.role === "ADMIN" || user.email === evento.criadoPorEmail) && (
-                      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex gap-2 justify-end">
-                        <Button size="xs" color="gray" onClick={() => fillForm(evento)}>Editar</Button>
-                        <Button size="xs" color="failure" onClick={() => handleDelete(evento.id)}>Excluir</Button>
-                      </div>
-                    )}
                   </Card>
                 );
-              })
-            ) : (
-              <p className="text-slate-500 italic text-sm">Nenhum evento agendado ainda.</p>
-            )}
-          </div>
+              })}
+            </div>
+          ) : (
+            <p className="text-slate-500 italic text-sm">Nenhum evento agendado para {getPeriodLabel(activePeriod) || "este mês"}.</p>
+          )}
         </div>
+
+        {/* Details Modal */}
+        {detailEvent && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]">
+              {/* Header */}
+              <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white truncate">{detailEvent.nome}</h3>
+                <button onClick={() => setDetailEvent(null)} className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-bold text-xl">&times;</button>
+              </div>
+              {/* Body */}
+              <div className="p-6 overflow-y-auto space-y-4">
+                {detailEvent.fotoUrl && (
+                  <div className="h-48 w-full rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800">
+                    <img src={detailEvent.fotoUrl} alt={detailEvent.nome} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-xs uppercase text-slate-400 font-bold">Data & Hora</h4>
+                    <p className="text-sm font-semibold">
+                      {new Date(detailEvent.dataEvento + "T00:00:00").toLocaleDateString("pt-BR")} às {detailEvent.horaEvento.substring(0, 5)}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-xs uppercase text-slate-400 font-bold">Público Estimado</h4>
+                    <p className="text-sm font-semibold">{detailEvent.publicoEstimado || 0} pessoas</p>
+                  </div>
+                </div>
+
+                {detailEvent.espaco && (
+                  <div className="border-t border-slate-200 dark:border-slate-800 pt-3">
+                    <h4 className="text-xs uppercase text-slate-400 font-bold">Espaço / Localização</h4>
+                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{detailEvent.espaco.nome}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{detailEvent.espaco.endereco}</p>
+                    {detailEvent.local && <p className="text-xs italic text-slate-500 mt-1">Ref: {detailEvent.local}</p>}
+                  </div>
+                )}
+
+                {detailEvent.artista && (
+                  <div className="border-t border-slate-200 dark:border-slate-800 pt-3">
+                    <h4 className="text-xs uppercase text-slate-400 font-bold">Artista / Coletivo</h4>
+                    <p className="text-sm font-semibold">{detailEvent.artista.nome}</p>
+                    <p className="text-xs text-slate-500">{detailEvent.artista.categoria}</p>
+                  </div>
+                )}
+
+                <div className="border-t border-slate-200 dark:border-slate-800 pt-3">
+                  <h4 className="text-xs uppercase text-slate-400 font-bold">Sobre o Evento</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-line mt-1 bg-slate-100 dark:bg-slate-950 p-3 rounded-lg">
+                    {detailEvent.descricao || "Sem descrição."}
+                  </p>
+                </div>
+              </div>
+              {/* Footer */}
+              <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex justify-end">
+                <Button color="purple" onClick={() => setDetailEvent(null)}>Fechar</Button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
