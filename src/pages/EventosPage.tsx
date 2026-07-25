@@ -361,7 +361,7 @@ export default function EventosPage({ user }: { user: any }) {
 
                       {/* 3. Title below image */}
                       <h4 className="text-md font-extrabold text-slate-900 dark:text-white leading-snug line-clamp-2">
-                        {evento.espaco ? `${evento.espaco.nome} | ` : ""}{evento.nome}
+                        {evento.nome}
                       </h4>
 
                       {/* 4. Description below title */}
@@ -369,9 +369,12 @@ export default function EventosPage({ user }: { user: any }) {
                         {evento.descricao || "Sem descrição disponível."}
                       </p>
 
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate italic">
-                        {evento.espaco ? evento.espaco.endereco : ""}
-                      </p>
+                      {evento.espaco && (
+                        <div className="text-[10px] text-slate-400 dark:text-slate-500 italic">
+                          <p className="font-semibold text-slate-500 dark:text-slate-400 not-italic truncate">{evento.espaco.nome}</p>
+                          <p className="truncate">{evento.espaco.endereco}</p>
+                        </div>
+                      )}
 
                       <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex flex-col gap-2">
                         <Button size="xs" color="purple" className="w-full font-bold" onClick={() => setDetailEvent(evento)}>
