@@ -208,8 +208,8 @@ Minimal Spring Boot backend scaffold for OCUPA.
 Run:
 
 ```bash
-cd ocupa-backend
-mvn spring-boot:run
+cd ocupa-frontend
+npm run dev
 ```
 
 Configure `src/main/resources/application.properties` with your MySQL credentials.
