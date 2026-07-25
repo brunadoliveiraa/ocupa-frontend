@@ -176,8 +176,9 @@ export default function EventosPage({ user }: { user: any }) {
         body: JSON.stringify(payload),
       });
 
+      const body = await response.json();
       if (!response.ok) {
-        throw new Error("Erro ao salvar evento");
+        throw new Error(body.error || "Erro ao salvar evento");
       }
 
       await fetchAll();

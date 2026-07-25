@@ -118,8 +118,9 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
         body: JSON.stringify(payload),
       });
 
+      const body = await response.json();
       if (!response.ok) {
-        throw new Error("Erro ao enviar proposta de orçamento");
+        throw new Error(body.error || "Erro ao enviar proposta de orçamento");
       }
 
       setRequestSuccess(true);

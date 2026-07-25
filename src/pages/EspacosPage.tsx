@@ -197,8 +197,9 @@ export default function EspacosPage({ user }: { user: any }) {
         body: JSON.stringify(payload),
       });
 
+      const body = await response.json();
       if (!response.ok) {
-        throw new Error("Erro ao salvar espaço");
+        throw new Error(body.error || "Erro ao salvar espaço");
       }
 
       await fetchAll();

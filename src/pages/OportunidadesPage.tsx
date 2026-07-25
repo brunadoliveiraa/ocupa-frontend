@@ -99,8 +99,9 @@ export default function OportunidadesPage({ user }: { user: any }) {
         body: JSON.stringify(payload),
       });
 
+      const body = await response.json();
       if (!response.ok) {
-        throw new Error("Erro ao salvar oportunidade");
+        throw new Error(body.error || "Erro ao salvar oportunidade");
       }
 
       await fetchAll();
