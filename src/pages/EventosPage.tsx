@@ -12,10 +12,8 @@ export default function EventosPage({ user }: { user: any }) {
   // Fields
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [local, setLocal] = useState("");
   const [dataEvento, setDataEvento] = useState("");
   const [horaEvento, setHoraEvento] = useState("");
-  const [publicoEstimado, setPublicoEstimado] = useState(0);
   const [selectedArtistaId, setSelectedArtistaId] = useState("");
   const [selectedEspacoId, setSelectedEspacoId] = useState("");
   const [fotoUrl, setFotoUrl] = useState("");
@@ -115,10 +113,8 @@ export default function EventosPage({ user }: { user: any }) {
     setSelected(null);
     setNome("");
     setDescricao("");
-    setLocal("");
     setDataEvento("");
     setHoraEvento("");
-    setPublicoEstimado(0);
     setSelectedArtistaId("");
     setSelectedEspacoId("");
     setFotoUrl("");
@@ -130,10 +126,8 @@ export default function EventosPage({ user }: { user: any }) {
     setSelected(evento);
     setNome(evento.nome || "");
     setDescricao(evento.descricao || "");
-    setLocal(evento.local || "");
     setDataEvento(evento.dataEvento || "");
     setHoraEvento(evento.horaEvento || "");
-    setPublicoEstimado(evento.publicoEstimado || 0);
     setSelectedArtistaId(evento.artista?.id?.toString() || "");
     setSelectedEspacoId(evento.espaco?.id?.toString() || "");
     setFotoUrl(evento.fotoUrl || "");
@@ -154,10 +148,8 @@ export default function EventosPage({ user }: { user: any }) {
     const payload = {
       nome,
       descricao,
-      local: local || espacoObj?.nome || "",
       dataEvento,
       horaEvento: horaEvento.includes(":") && horaEvento.split(":").length === 2 ? `${horaEvento}:00` : horaEvento,
-      publicoEstimado,
       artista: artistaObj ? { id: artistaObj.id } : null,
       espaco: espacoObj ? { id: espacoObj.id } : null,
       latitude: espacoObj?.latitude || null,
@@ -267,17 +259,10 @@ export default function EventosPage({ user }: { user: any }) {
                     <TextInput id="horaEvento" type="time" value={horaEvento} onChange={(e) => setHoraEvento(e.target.value)} required />
                   </div>
                 </div>
+              </div>
 
-                <div>
-                  <Label htmlFor="publicoEstimado">Público Estimado (Capacidade)</Label>
-                  <TextInput
-                    id="publicoEstimado"
-                    type="number"
-                    value={publicoEstimado}
-                    onChange={(e) => setPublicoEstimado(Number(e.target.value))}
-                  />
-                </div>
-
+              <div className="space-y-4">
+                
                 <div>
                   <Label htmlFor="eventFoto">Foto / Capa de Título do Evento</Label>
                   <input
@@ -308,9 +293,7 @@ export default function EventosPage({ user }: { user: any }) {
                     </div>
                   )}
                 </div>
-              </div>
 
-              <div className="space-y-4">
                 <div>
                   <Label htmlFor="artistaId">Artista / Coletivo Responsável</Label>
                   <Select id="artistaId" value={selectedArtistaId} onChange={(e) => setSelectedArtistaId(e.target.value)} required>
@@ -331,10 +314,6 @@ export default function EventosPage({ user }: { user: any }) {
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="local">Referência de Localização Especial (Opcional)</Label>
-                  <TextInput id="local" value={local} onChange={(e) => setLocal(e.target.value)} placeholder="Ex: Próximo à estação de metrô / Palco A" />
-                </div>
               </div>
 
               {error && <Alert color="failure" className="lg:col-span-2">{error}</Alert>}
@@ -391,7 +370,7 @@ export default function EventosPage({ user }: { user: any }) {
                       </p>
 
                       <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate italic">
-                        {evento.local || (evento.espaco ? evento.espaco.endereco : "")}
+                        {evento.espaco ? evento.espaco.endereco : ""}
                       </p>
 
                       <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex flex-col gap-2">
@@ -436,17 +415,11 @@ export default function EventosPage({ user }: { user: any }) {
                   </div>
                 )}
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-xs uppercase text-slate-400 font-bold">Data & Hora</h4>
-                    <p className="text-sm font-semibold">
-                      {new Date(detailEvent.dataEvento + "T00:00:00").toLocaleDateString("pt-BR")} às {detailEvent.horaEvento.substring(0, 5)}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="text-xs uppercase text-slate-400 font-bold">Público Estimado</h4>
-                    <p className="text-sm font-semibold">{detailEvent.publicoEstimado || 0} pessoas</p>
-                  </div>
+                <div>
+                  <h4 className="text-xs uppercase text-slate-400 font-bold">Data & Hora</h4>
+                  <p className="text-sm font-semibold">
+                    {new Date(detailEvent.dataEvento + "T00:00:00").toLocaleDateString("pt-BR")} às {detailEvent.horaEvento.substring(0, 5)}
+                  </p>
                 </div>
 
                 {detailEvent.espaco && (
@@ -454,7 +427,6 @@ export default function EventosPage({ user }: { user: any }) {
                     <h4 className="text-xs uppercase text-slate-400 font-bold">Espaço / Localização</h4>
                     <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{detailEvent.espaco.nome}</p>
                     <p className="text-xs text-slate-600 dark:text-slate-400">{detailEvent.espaco.endereco}</p>
-                    {detailEvent.local && <p className="text-xs italic text-slate-500 mt-1">Ref: {detailEvent.local}</p>}
                   </div>
                 )}
 
