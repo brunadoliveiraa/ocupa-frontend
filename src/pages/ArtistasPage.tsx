@@ -211,7 +211,7 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
                     {!isCurrentUser && (
                       <Button
                         size="sm"
-                        color="emerald"
+                        color="amber"
                         onClick={() => {
                           setSelectedArtista(artista);
                           setShowRequestModal(true);
@@ -257,7 +257,7 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
 
                 <div className="space-y-2">
                   <h3 className="font-bold text-sm uppercase text-slate-500 tracking-wider">Cidade</h3>
-                  <p className="text-sm">{selectedArtista.cidade || "Não informada"}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">{selectedArtista.cidade || "Não informada"}</p>
                 </div>
 
                 <div className="space-y-2">
@@ -296,7 +296,7 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
 
                 {portfolio?.mediaItems && portfolio.mediaItems.length > 0 && (
                   <div className="space-y-3">
-                    <h3 className="font-bold text-md border-b pb-1">Galeria de Trabalhos</h3>
+                    <h3 className="font-bold text-md border-b border-slate-200 dark:border-slate-700 pb-1 text-slate-800 dark:text-slate-200">Galeria de Trabalhos</h3>
                     
                     <div className="grid gap-4 sm:grid-cols-2">
                       {portfolio.mediaItems.map((item: any) => (
@@ -332,7 +332,7 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
                 Fechar
               </Button>
               {user?.artistaId !== selectedArtista.id && (
-                <Button color="emerald" onClick={() => setShowRequestModal(true)}>
+                <Button color="purple" onClick={() => setShowRequestModal(true)}>
                   Solicitar Orçamento
                 </Button>
               )}
@@ -388,7 +388,7 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
                 <Button type="button" color="gray" onClick={() => setShowRequestModal(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit" color="emerald">
+                <Button type="submit" color="purple">
                   Enviar Proposta
                 </Button>
               </div>

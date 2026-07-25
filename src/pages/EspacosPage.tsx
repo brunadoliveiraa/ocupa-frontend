@@ -231,7 +231,7 @@ export default function EspacosPage({ user }: { user: any }) {
             </p>
           </div>
           {user && (
-            <Button color="emerald" onClick={() => { isEditing ? resetForm() : setShowForm(!showForm); }}>
+            <Button color="amber" onClick={() => { isEditing ? resetForm() : setShowForm(!showForm); }}>
               {showForm ? "Esconder Formulário" : "Mapear Novo Espaço"}
             </Button>
           )}
@@ -368,7 +368,7 @@ export default function EspacosPage({ user }: { user: any }) {
               {error && <Alert color="failure" className="lg:col-span-2">{error}</Alert>}
 
               <div className="lg:col-span-2 flex gap-3 pt-2">
-                <Button type="submit" color="emerald">{isEditing ? "Atualizar" : "Salvar Espaço"}</Button>
+                <Button type="submit" color="amber">{isEditing ? "Atualizar" : "Salvar Espaço"}</Button>
                 <Button color="gray" onClick={resetForm}>Cancelar</Button>
               </div>
             </form>
@@ -379,13 +379,13 @@ export default function EspacosPage({ user }: { user: any }) {
         <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
           {/* Map display */}
           <Card className="p-0 overflow-hidden border-slate-200 dark:border-slate-800">
-            <h3 className="text-lg font-bold p-4 border-b">Mapeamento Georreferenciado dos Ativos (Mapa Afetivo)</h3>
+            <h3 className="text-lg font-bold p-4 border-b border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200">Mapeamento Georreferenciado dos Ativos (Mapa Afetivo)</h3>
             <div id="map" className="w-full h-[450px] rounded-b-lg"></div>
           </Card>
 
           {/* Spaces directory */}
           <div className="space-y-4 max-h-[520px] overflow-y-auto pr-2">
-            <h3 className="text-lg font-bold border-b pb-2">Lista de Espaços</h3>
+            <h3 className="text-lg font-bold border-b border-slate-200 dark:border-slate-700 pb-2 text-slate-800 dark:text-slate-200">Lista de Espaços</h3>
             
             {espacos.length > 0 ? (
               espacos.map((espaco) => (
