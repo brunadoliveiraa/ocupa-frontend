@@ -20,6 +20,7 @@ export default function OportunidadesPage({ user }: { user: any }) {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [filterTipo, setFilterTipo] = useState("");
+  const [detailOportunidade, setDetailOportunidade] = useState<any | null>(null);
 
   useEffect(() => {
     fetchAll();
@@ -257,7 +258,7 @@ export default function OportunidadesPage({ user }: { user: any }) {
 
         {/* Opportunities List Grid */}
         {filteredOportunidades.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 items-start">
             {filteredOportunidades.map((item) => {
               const daysLeft = item.dataFim
                 ? Math.ceil((new Date(item.dataFim).getTime() - new Date().getTime()) / (1000 * 3600 * 24))
@@ -296,7 +297,7 @@ export default function OportunidadesPage({ user }: { user: any }) {
                       </p>
                     </div>
 
-                    <p className="text-slate-600 dark:text-slate-300 text-sm whitespace-pre-line leading-relaxed">
+                    <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed line-clamp-3">
                       {item.descricao}
                     </p>
 
@@ -307,12 +308,15 @@ export default function OportunidadesPage({ user }: { user: any }) {
                   </div>
 
                   <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap gap-2 justify-between items-center">
-                    {user && (user.role === "ADMIN" || user.email === item.criadoPorEmail) ? (
-                      <div className="flex gap-2">
-                        <Button size="xs" color="gray" onClick={() => fillForm(item)}>Editar</Button>
-                        <Button size="xs" color="failure" onClick={() => handleDelete(item.id)}>Excluir</Button>
-                      </div>
-                    ) : <div />}
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <Button size="xs" color="amber" onClick={() => setDetailOportunidade(item)}>Ver Detalhes</Button>
+                      {user && (user.role === "ADMIN" || user.email === item.criadoPorEmail) && (
+                        <>
+                          <Button size="xs" color="gray" onClick={() => fillForm(item)}>Editar</Button>
+                          <Button size="xs" color="failure" onClick={() => handleDelete(item.id)}>Excluir</Button>
+                        </>
+                      )}
+                    </div>
 
                     {item.inscricaoLink && (
                       <Button size="sm" color="amber">
@@ -329,6 +333,74 @@ export default function OportunidadesPage({ user }: { user: any }) {
         ) : (
           <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
             <p className="text-slate-500 italic">Nenhuma oportunidade publicada nesta categoria ainda.</p>
+          </div>
+        )}
+
+        {/* Details Modal */}
+        {detailOportunidade && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]">
+              {/* Header */}
+              <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Badge color="warning" size="sm" className="uppercase tracking-wider font-extrabold flex-shrink-0">
+                    {detailOportunidade.tipo || "Edital"}
+                  </Badge>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate">{detailOportunidade.titulo}</h3>
+                </div>
+                <button onClick={() => setDetailOportunidade(null)} className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-bold text-xl">&times;</button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 overflow-y-auto space-y-4">
+                {detailOportunidade.fotoUrl && (
+                  <div className="h-48 w-full rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
+                    <img src={detailOportunidade.fotoUrl} alt={detailOportunidade.titulo} className="w-full h-full object-cover" />
+                  </div>
+                )}
+
+                <div>
+                  <h4 className="text-xs uppercase text-slate-400 font-bold">Abrangência / Localidade</h4>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{detailOportunidade.local || "Online"}</p>
+                </div>
+
+                {(detailOportunidade.dataInicio || detailOportunidade.dataFim) && (
+                  <div className="border-t border-slate-200 dark:border-slate-800 pt-3 space-y-1">
+                    <h4 className="text-xs uppercase text-slate-400 font-bold">Prazos e Inscrições</h4>
+                    {detailOportunidade.dataInicio && (
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        <strong>Início:</strong> {new Date(detailOportunidade.dataInicio).toLocaleDateString("pt-BR")}
+                      </p>
+                    )}
+                    {detailOportunidade.dataFim && (
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        <strong>Fim das Inscrições:</strong> {new Date(detailOportunidade.dataFim).toLocaleDateString("pt-BR")}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="border-t border-slate-200 dark:border-slate-800 pt-3">
+                  <h4 className="text-xs uppercase text-slate-400 font-bold">Descrição Completa e Critérios</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line mt-1 bg-slate-100 dark:bg-slate-950 p-3 rounded-lg leading-relaxed">
+                    {detailOportunidade.descricao || "Sem descrição disponível."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
+                <Button color="gray" onClick={() => setDetailOportunidade(null)}>Fechar</Button>
+
+                {detailOportunidade.inscricaoLink && (
+                  <Button color="amber">
+                    <a href={detailOportunidade.inscricaoLink} target="_blank" rel="noopener noreferrer">
+                      Inscrever-se no Edital
+                    </a>
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
