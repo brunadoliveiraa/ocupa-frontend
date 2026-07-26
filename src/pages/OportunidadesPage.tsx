@@ -15,7 +15,7 @@ export default function OportunidadesPage({ user }: { user: any }) {
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
   const [inscricaoLink, setInscricaoLink] = useState("");
-  const [contato, setContato] = useState("");
+  const [fotoUrl, setFotoUrl] = useState("");
   
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -53,7 +53,7 @@ export default function OportunidadesPage({ user }: { user: any }) {
     setDataInicio("");
     setDataFim("");
     setInscricaoLink("");
-    setContato("");
+    setFotoUrl("");
     setError(null);
     setShowForm(false);
   }
@@ -67,7 +67,7 @@ export default function OportunidadesPage({ user }: { user: any }) {
     setDataInicio(item.dataInicio || "");
     setDataFim(item.dataFim || "");
     setInscricaoLink(item.inscricaoLink || "");
-    setContato(item.contato || "");
+    setFotoUrl(item.fotoUrl || "");
     setError(null);
     setShowForm(true);
     
@@ -86,7 +86,7 @@ export default function OportunidadesPage({ user }: { user: any }) {
       dataInicio, 
       dataFim, 
       inscricaoLink, 
-      contato,
+      fotoUrl,
       criadoPorEmail: isEditing ? selected.criadoPorEmail : (user ? user.email : null)
     };
     const method = isEditing ? "PUT" : "POST";
@@ -184,6 +184,37 @@ export default function OportunidadesPage({ user }: { user: any }) {
 
               <div className="space-y-4">
                 <div>
+                  <Label htmlFor="oportFoto">Foto / Capa da Oportunidade</Label>
+                  <input
+                    id="oportFoto"
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const base64 = await new Promise<string>((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.readAsDataURL(file);
+                            reader.onload = () => resolve(reader.result as string);
+                            reader.onerror = reject;
+                          });
+                          setFotoUrl(base64);
+                        } catch (err) {
+                          console.error("Erro ao converter imagem da oportunidade:", err);
+                        }
+                      }
+                    }}
+                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 bg-white border border-slate-300 rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300"
+                  />
+                  {fotoUrl && (
+                    <div className="mt-2 h-20 w-32 rounded overflow-hidden border border-slate-200 dark:border-slate-800">
+                      <img src={fotoUrl} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
+
+                <div>
                   <Label htmlFor="descricao">Descrição e Critérios</Label>
                   <TextInput id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex: Projeto focado em muralistas locais com premiação de..." />
                 </div>
@@ -191,11 +222,6 @@ export default function OportunidadesPage({ user }: { user: any }) {
                 <div>
                   <Label htmlFor="inscricaoLink">Link Externo do Edital / Formulário</Label>
                   <TextInput id="inscricaoLink" value={inscricaoLink} onChange={(e) => setInscricaoLink(e.target.value)} placeholder="https://exemplo.com/edital-completo" />
-                </div>
-
-                <div>
-                  <Label htmlFor="contato">Informações de Contato / E-mail</Label>
-                  <TextInput id="contato" value={contato} onChange={(e) => setContato(e.target.value)} placeholder="contato@edital.com" required />
                 </div>
               </div>
 
@@ -257,6 +283,12 @@ export default function OportunidadesPage({ user }: { user: any }) {
                       ) : null}
                     </div>
 
+                    {item.fotoUrl && (
+                      <div className="h-40 w-full rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
+                        <img src={item.fotoUrl} alt={item.titulo} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+
                     <div>
                       <h2 className="text-xl font-bold tracking-tight">{item.titulo}</h2>
                       <p className="text-xs text-slate-500 mt-1">
@@ -271,7 +303,6 @@ export default function OportunidadesPage({ user }: { user: any }) {
                     <div className="text-xs text-slate-500 space-y-1">
                       {item.dataInicio && <p><strong>Início:</strong> {new Date(item.dataInicio).toLocaleDateString("pt-BR")}</p>}
                       {item.dataFim && <p><strong>Fim das Inscrições:</strong> {new Date(item.dataFim).toLocaleDateString("pt-BR")}</p>}
-                      <p><strong>Contato do Edital:</strong> {item.contato}</p>
                     </div>
                   </div>
 
