@@ -3,10 +3,6 @@ import {
   Button,
   Card,
   DarkThemeToggle,
-  Footer,
-  FooterLink,
-  FooterLinkGroup,
-  FooterTitle,
   Navbar,
   NavbarBrand,
   NavbarCollapse,
@@ -94,88 +90,193 @@ export default function App() {
         );
       default:
         return (
-          <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 space-y-16">
-            <section className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-              <div className="space-y-6">
-                <Badge color="indigo" size="sm" className="w-fit">Rede Cultural e Comercial Periférica</Badge>
-                <div className="space-y-4">
-                  <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl tracking-tight bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 bg-clip-text text-transparent">
-                    Ocupa o território. Conecte sua arte.
-                  </h1>
-                  <p className="max-w-2xl text-slate-600 dark:text-slate-300 sm:text-lg">
-                    Uma plataforma feita por e para artistas, coletivos e espaços periféricos. Cadastre-se, divulgue suas oportunidades, encontre locais livres para apresentações e gerencie contatos e contratações em um ecossistema comercial descentralizado.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Button color="indigo" size="lg" onClick={() => setRoute("artistas")}>Conhecer Artistas</Button>
-                  <Button color="emerald" size="lg" onClick={() => setRoute("espacos")}>Explorar Espaços Culturais</Button>
-                </div>
-              </div>
-
-              <Card className="shadow-2xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-500">
-                        Ativos do Ecossistema
-                      </p>
-                      <h2 className="text-2xl font-bold tracking-tight mt-1">Impacto Periférico</h2>
-                    </div>
-                    <Badge color="success">Ao Vivo</Badge>
-                  </div>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm">
-                    Ao fortalecer as redes culturais locais, potencializamos oportunidades econômicas e a redução de desigualdades (ODS 8, 10).
-                  </p>
-                  <div className="grid gap-3 grid-cols-2">
-                    <Card className="bg-slate-100/50 dark:bg-slate-800/50 p-2">
-                      <p className="text-xs font-semibold text-slate-500">Artistas/Projetos</p>
-                      <p className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">+{stats.artistas}</p>
-                    </Card>
-                    <Card className="bg-slate-100/50 dark:bg-slate-800/50 p-2">
-                      <p className="text-xs font-semibold text-slate-500">Espaços Mapeados</p>
-                      <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">+{stats.espacos}</p>
-                    </Card>
-                    <Card className="bg-slate-100/50 dark:bg-slate-800/50 p-2">
-                      <p className="text-xs font-semibold text-slate-500">Eventos na Agenda</p>
-                      <p className="text-2xl font-extrabold text-purple-600 dark:text-purple-400">+{stats.eventos}</p>
-                    </Card>
-                    <Card className="bg-slate-100/50 dark:bg-slate-800/50 p-2">
-                      <p className="text-xs font-semibold text-slate-500">Editais e Vagas</p>
-                      <p className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">+{stats.oportunidades}</p>
-                    </Card>
-                  </div>
-                </div>
-              </Card>
+          <main>
+            {/* ═══════ HERO BANNER ═══════ */}
+            <section className="relative w-full h-[420px] sm:h-[500px] overflow-hidden grain-overlay">
+              <img
+                src="/hero_banner.jpg"
+                alt="Arte urbana periférica"
+                className="absolute inset-0 w-full h-full object-cover grayscale"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-orange-700/60 via-orange-600/40 to-orange-900/70 mix-blend-multiply" />
             </section>
 
-            <section id="features" className="space-y-6">
-              <div className="space-y-3 text-center">
-                <span className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-500">
-                  Como Funciona?
-                </span>
-                <h2 className="text-3xl font-extrabold tracking-tight">O que você encontra no Ocupa</h2>
-                <p className="max-w-2xl mx-auto text-slate-600 dark:text-slate-400 text-sm">
-                  O ecossistema reúne ferramentas integradas para que o agente cultural seja protagonista da própria sustentabilidade e atuação artística.
+            {/* ═══════ STATS + QUEM SOMOS ═══════ */}
+            <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
+              <div className="grid gap-8 lg:grid-cols-[1.1fr_0.05fr_0.85fr] items-start">
+                {/* Stats Card */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-sm p-6 shadow-xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-display text-2xl tracking-wider uppercase text-slate-900 dark:text-white">
+                      Ativos do Ecossistema
+                    </h2>
+                    <Badge color="failure" className="font-body text-xs uppercase tracking-wider">Ao Vivo</Badge>
+                  </div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Acompanhe aqui em tempo real o impacto do Ocupa. Ao fortalecer as redes culturais locais, potencializamos oportunidades econômicas e a redução de desigualdades (ODS 8 e 10).
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: "Artistas", value: stats.artistas },
+                      { label: "Espaços Mapeados", value: stats.espacos },
+                      { label: "Eventos na Agenda", value: stats.eventos },
+                      { label: "Oportunidades", value: stats.oportunidades },
+                    ].map((item) => (
+                      <div key={item.label} className="border border-slate-200 dark:border-slate-700 rounded-sm p-3">
+                        <p className="text-xs font-body text-slate-500 dark:text-slate-400">{item.label}</p>
+                        <p className="text-3xl font-display text-orange-600 dark:text-orange-500">+{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* IMPACTO vertical text */}
+                <div className="hidden lg:flex items-center justify-center">
+                  <span className="vertical-text font-display text-5xl tracking-[0.3em] text-slate-300 dark:text-slate-700 select-none">
+                    IMPACTO
+                  </span>
+                </div>
+
+                {/* Quem Somos */}
+                <div className="space-y-4 pt-4 lg:pt-36">
+                  <h2 className="font-display text-4xl lg:text-5xl tracking-wider uppercase leading-tight text-slate-900 dark:text-white">
+                    Quem Somos
+                  </h2>
+                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                    Uma <strong className="text-orange-600 dark:text-orange-500">Plataforma de Gestão de Ecossistemas Culturais</strong>
+                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Reunimos várias funcionalidades (que hoje estão dispersas em diferentes sistemas) para facilitar a produção, organização e divulgação da arte.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* ═══════ PLATAFORMA + CTAs ═══════ */}
+            <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 space-y-8">
+              <div>
+                <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed max-w-2xl">
+                  Plataforma feita para <strong className="text-slate-900 dark:text-white">artistas, coletivos</strong> e <strong className="text-slate-900 dark:text-white">espaços periféricos</strong>. Um espaço para descobrir talentos, ocupar territórios, fortalecer conexões e ampliar oportunidades culturais.
                 </p>
               </div>
 
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                {[
-                  { title: "Artistas & Serviços", description: "Veja portfólios profissionais detalhados, contatos e solicite orçamentos para apresentações.", action: () => setRoute("artistas"), btnColor: "indigo" },
-                  { title: "Espaços Disponíveis", description: "Encontre praças comunitárias, galerias, muros para grafite e galpões periféricos cadastrados.", action: () => setRoute("espacos"), btnColor: "emerald" },
-                  { title: "Agenda Cultural", description: "Acompanhe e cadastre saraus, batalhas de rima, mostras de dança e intervenções urbanas.", action: () => setRoute("eventos"), btnColor: "purple" },
-                  { title: "Oportunidades", description: "Consulte editais de fomento, bolsas, workshops e residências de arte da comunidade.", action: () => setRoute("oportunidades"), btnColor: "amber" },
-                ].map((item) => (
-                  <Card key={item.title} className="border-slate-200 dark:border-slate-800 hover:shadow-lg transition flex flex-col justify-between">
-                    <div>
-                      <h3 className="text-xl font-bold tracking-tight">{item.title}</h3>
-                      <p className="mt-3 text-slate-600 dark:text-slate-400 text-sm">{item.description}</p>
+              <div className="flex flex-wrap items-center gap-6">
+                <button
+                  onClick={() => setRoute("register")}
+                  className="font-display text-lg tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-orange-600 dark:hover:text-orange-500 transition-colors underline underline-offset-4"
+                >
+                  Cadastre-se
+                </button>
+                <span className="w-2 h-2 rounded-full bg-slate-900 dark:bg-slate-400" />
+                <button
+                  onClick={() => setRoute("artistas")}
+                  className="font-display text-lg tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-orange-600 dark:hover:text-orange-500 transition-colors underline underline-offset-4"
+                >
+                  Contrate
+                </button>
+                <span className="w-2 h-2 rounded-full bg-slate-900 dark:bg-slate-400" />
+                <button
+                  onClick={() => setRoute("espacos")}
+                  className="font-display text-lg tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-orange-600 dark:hover:text-orange-500 transition-colors underline underline-offset-4"
+                >
+                  Conheça Espaços
+                </button>
+              </div>
+            </section>
+
+            {/* ═══════ COMO FUNCIONA ═══════ */}
+            <section className="border-t border-slate-200 dark:border-slate-800">
+              <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 space-y-8">
+                <div className="space-y-2">
+                  <span className="font-display text-sm tracking-[0.3em] uppercase text-orange-600 dark:text-orange-500">
+                    Como Funciona?
+                  </span>
+                  <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    O que você encontra no{" "}
+                    <span className="text-orange-600 dark:text-orange-500">Ocupa</span>
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 max-w-lg">
+                    Tudo o que movimenta a cultura periférica em um único lugar.
+                  </p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {[
+                    {
+                      title: "Artistas e Serviços",
+                      desc: "Veja portfólios, contatos e solicite orçamentos.",
+                      action: () => setRoute("artistas"),
+                    },
+                    {
+                      title: "Espaços Disponíveis",
+                      desc: "Encontre praças, galerias, muros e muitos outros lugares.",
+                      action: () => setRoute("espacos"),
+                    },
+                    {
+                      title: "Agenda Cultural",
+                      desc: "Acompanhe e cadastre batalhas de rima, mostras de dança e intervenções urbanas.",
+                      action: () => setRoute("eventos"),
+                    },
+                    {
+                      title: "Oportunidades",
+                      desc: "Consulte editais de fomento, bolsas, chamadas residências e vagas.",
+                      action: () => setRoute("oportunidades"),
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.title}
+                      onClick={item.action}
+                      className="border border-slate-200 dark:border-slate-700 rounded-sm p-5 hover:border-orange-500 dark:hover:border-orange-500 hover:shadow-md transition-all cursor-pointer group"
+                    >
+                      <h3 className="font-display text-xl tracking-wider uppercase text-slate-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-500 transition-colors">
+                        {item.title}
+                      </h3>
+                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                        {item.desc}
+                      </p>
                     </div>
-                    <Button size="xs" color={item.btnColor} className="mt-4 w-fit" onClick={item.action}>
-                      Acessar funcionalidade
-                    </Button>
-                  </Card>
-                ))}
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* ═══════ O QUE QUEREMOS ═══════ */}
+            <section className="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+              <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16">
+                <div className="grid gap-8 lg:grid-cols-[1fr_0.05fr_1fr] items-start">
+                  {/* Photo */}
+                  <div className="relative rounded-sm overflow-hidden grain-overlay h-[400px]">
+                    <img
+                      src="/mission_photo.jpg"
+                      alt="Artista criando mural"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* O QUE QUEREMOS vertical text */}
+                  <div className="hidden lg:flex items-center justify-center">
+                    <span className="vertical-text font-display text-4xl tracking-[0.3em] text-slate-300 dark:text-slate-700 select-none whitespace-nowrap">
+                      O QUE QUEREMOS
+                    </span>
+                  </div>
+
+                  {/* Mission text */}
+                  <div className="space-y-6">
+                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                      Nosso <strong className="text-slate-900 dark:text-white">objetivo</strong> é fortalecer ecossistemas culturais para que eles produzam oportunidades, reforcem sua cultura local, ampliem a geração de renda e valorizem a memória do território.
+                    </p>
+
+                    <div className="space-y-2">
+                      <p className="font-display text-xl tracking-wider uppercase text-slate-900 dark:text-white">
+                        E como fazemos isso?
+                      </p>
+                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                        O <strong className="text-orange-600 dark:text-orange-500">OCUPA</strong> cria a infraestrutura digital que integra e divulga artistas, espaços, eventos e oportunidades, estimulando o{" "}
+                        <strong className="text-slate-900 dark:text-white">crescimento da economia criativa</strong>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </section>
           </main>
@@ -184,61 +285,75 @@ export default function App() {
   }, [route, stats, user]);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col justify-between">
+    <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col justify-between">
       <div>
+        {/* ═══════ NAVBAR ═══════ */}
         <Navbar fluid rounded className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95 sticky top-0 z-50 backdrop-blur-md">
           <NavbarBrand href="#" onClick={() => setRoute("home")}>
-            <span className="self-center whitespace-nowrap text-2xl font-black bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 bg-clip-text text-transparent">
-              OCUPA
-            </span>
+            <div className="flex flex-col leading-none">
+              <span className="font-display text-3xl tracking-wider text-slate-900 dark:text-white">
+                OCUPA
+              </span>
+              <span className="font-body text-[9px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 -mt-1">
+                O território fala o Ocupa conecta
+              </span>
+            </div>
           </NavbarBrand>
           
           <div className="flex items-center gap-3 md:order-2">
             <DarkThemeToggle />
             {user ? (
               <div className="flex items-center gap-2">
-                <Button size="sm" color="indigo" onClick={() => setRoute("painel")}>
+                <button
+                  onClick={() => setRoute("painel")}
+                  className="font-display text-xs tracking-widest uppercase text-slate-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-500 transition-colors"
+                >
                   Painel
-                </Button>
-                <Button
-                  size="sm"
-                  color="gray"
+                </button>
+                <button
                   onClick={() => {
                     window.localStorage.removeItem("ocupaUser");
                     setUser(null);
                     setRoute("home");
                   }}
+                  className="font-display text-xs tracking-widest uppercase text-slate-500 hover:text-orange-600 dark:hover:text-orange-500 transition-colors"
                 >
                   Sair
-                </Button>
+                </button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Button size="sm" color="indigo" onClick={() => setRoute("login")}>
+                <button
+                  onClick={() => setRoute("login")}
+                  className="font-display text-xs tracking-widest uppercase text-slate-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-500 transition-colors"
+                >
                   Entrar
-                </Button>
-                <Button size="sm" color="gray" onClick={() => setRoute("register")}>
+                </button>
+                <button
+                  onClick={() => setRoute("register")}
+                  className="font-display text-xs tracking-widest uppercase text-slate-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-500 transition-colors"
+                >
                   Cadastrar
-                </Button>
+                </button>
               </div>
             )}
             <NavbarToggle />
           </div>
 
           <NavbarCollapse>
-            <NavbarLink active={route === "home"} onClick={() => setRoute("home")} className="cursor-pointer">
+            <NavbarLink active={route === "home"} onClick={() => setRoute("home")} className="cursor-pointer font-display tracking-widest uppercase text-xs">
               Home
             </NavbarLink>
-            <NavbarLink active={route === "artistas"} onClick={() => setRoute("artistas")} className="cursor-pointer">
+            <NavbarLink active={route === "artistas"} onClick={() => setRoute("artistas")} className="cursor-pointer font-display tracking-widest uppercase text-xs">
               Artistas
             </NavbarLink>
-            <NavbarLink active={route === "espacos"} onClick={() => setRoute("espacos")} className="cursor-pointer">
+            <NavbarLink active={route === "espacos"} onClick={() => setRoute("espacos")} className="cursor-pointer font-display tracking-widest uppercase text-xs">
               Espaços
             </NavbarLink>
-            <NavbarLink active={route === "eventos"} onClick={() => setRoute("eventos")} className="cursor-pointer">
-              Agenda/Eventos
+            <NavbarLink active={route === "eventos"} onClick={() => setRoute("eventos")} className="cursor-pointer font-display tracking-widest uppercase text-xs">
+              Agenda
             </NavbarLink>
-            <NavbarLink active={route === "oportunidades"} onClick={() => setRoute("oportunidades")} className="cursor-pointer">
+            <NavbarLink active={route === "oportunidades"} onClick={() => setRoute("oportunidades")} className="cursor-pointer font-display tracking-widest uppercase text-xs">
               Oportunidades
             </NavbarLink>
           </NavbarCollapse>
@@ -247,39 +362,12 @@ export default function App() {
         {content}
       </div>
 
-      <Footer container className="border-t border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95 py-8 mt-16">
-        <div className="w-full max-w-7xl mx-auto space-y-6">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <div>
-              <span className="text-2xl font-black bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 bg-clip-text text-transparent">
-                OCUPA
-              </span>
-              <p className="mt-3 max-w-xs text-sm text-slate-500 dark:text-slate-400">
-                Fortalecendo os ecossistemas periféricos de arte e negócios. Conectando artistas, coletivos e espaços criativos locais.
-              </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <FooterTitle title="Mapeamento" />
-                <FooterLinkGroup col>
-                  <FooterLink href="#" onClick={() => setRoute("artistas")}>Artistas</FooterLink>
-                  <FooterLink href="#" onClick={() => setRoute("espacos")}>Espaços Culturais</FooterLink>
-                </FooterLinkGroup>
-              </div>
-              <div>
-                <FooterTitle title="Objetivos ODS" />
-                <FooterLinkGroup col>
-                  <FooterLink href="https://brasil.un.org/pt-br/sdgs/8" target="_blank">ODS 8 - Trabalho Decente</FooterLink>
-                  <FooterLink href="https://brasil.un.org/pt-br/sdgs/10" target="_blank">ODS 10 - Redução de Desigualdades</FooterLink>
-                </FooterLinkGroup>
-              </div>
-            </div>
-          </div>
-          <div className="w-full border-t border-slate-200 dark:border-slate-800 pt-6 text-center text-xs text-slate-500">
-            © {new Date().getFullYear()} Ocupa Plataforma Cultural. Todos os direitos reservados.
-          </div>
+      {/* ═══════ FOOTER ═══════ */}
+      <footer className="border-t border-slate-200 dark:border-slate-800 py-6 mt-16">
+        <div className="text-center text-xs text-slate-500 dark:text-slate-400 font-body">
+          © {new Date().getFullYear()} Ocupa Plataforma Cultural. Todos os direitos reservados.
         </div>
-      </Footer>
+      </footer>
     </div>
   );
 }
