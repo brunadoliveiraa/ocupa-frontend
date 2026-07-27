@@ -333,23 +333,13 @@ export default function EventosPage({ user }: { user: any }) {
           </h3>
 
           {filteredEventos.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 items-start">
               {filteredEventos.map((evento) => {
-                const dateObj = new Date(evento.dataEvento + "T00:00:00");
-                const day = dateObj.getDate().toString().padStart(2, '0');
-                const monthShort = dateObj.toLocaleDateString("pt-BR", { month: "short" }).toUpperCase().replace(".", "");
-                const dateFormatted = `${day}.${monthShort}`;
-
                 return (
-                  <Card key={evento.id} className="border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col h-full p-0 overflow-hidden">
-                    <div className="p-4 flex flex-col h-full space-y-3">
-                      {/* 1. Date above image */}
-                      <span className="text-sm font-extrabold text-slate-500 tracking-wider">
-                        {dateFormatted}
-                      </span>
-
-                      {/* 2. Cover image */}
-                      <div className="h-40 w-full rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 relative">
+                  <Card key={evento.id} className="border-slate-200 dark:border-slate-800 hover:shadow-lg transition flex flex-col justify-between p-0 overflow-hidden">
+                    <div className="p-4 flex flex-col space-y-3">
+                      {/* 1. Cover image (Square) */}
+                      <div className="h-70 w-full rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 relative">
                         {evento.fotoUrl ? (
                           <img src={evento.fotoUrl} alt={evento.nome} className="w-full h-full object-cover" />
                         ) : (
@@ -359,38 +349,57 @@ export default function EventosPage({ user }: { user: any }) {
                         )}
                       </div>
 
-                      {/* 3. Title below image */}
-                      <h4 className="text-md font-extrabold text-slate-900 dark:text-white leading-snug line-clamp-2">
+                      {/* 2. Title */}
+                      <h4 className="text-lg font-bold text-slate-900 dark:text-white leading-snug line-clamp-2">
                         {evento.nome}
                       </h4>
 
-                      {/* 4. Description below title */}
-                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed flex-grow">
+                      {/* 3. Description */}
+                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed">
                         {evento.descricao || "Sem descrição disponível."}
                       </p>
 
-                      {evento.espaco && (
-                        <div className="text-[10px] text-slate-400 dark:text-slate-500 italic">
-                          <p className="font-semibold text-slate-500 dark:text-slate-400 not-italic truncate">{evento.espaco.nome}</p>
-                          <p className="truncate">{evento.espaco.endereco}</p>
-                        </div>
-                      )}
+                      {/* 4. Meta Details: Data, Hora, Artista, Espaço */}
+                      <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                        {evento.dataEvento && (
+                          <p>
+                            <strong>Data & Hora:</strong> {new Date(evento.dataEvento + "T00:00:00").toLocaleDateString("pt-BR")}
+                            {evento.horaEvento ? ` às ${evento.horaEvento.substring(0, 5)}` : ""}
+                          </p>
+                        )}
 
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex flex-col gap-2">
-                        <Button size="xs" color="purple" className="w-full font-bold" onClick={() => setDetailEvent(evento)}>
-                          Ver Detalhes
-                        </Button>
-                        {user && (user.role === "ADMIN" || user.email === evento.criadoPorEmail) && (
-                          <div className="flex gap-2">
-                            <Button size="xs" color="gray" className="flex-1" onClick={() => fillForm(evento)}>
-                              Editar
-                            </Button>
-                            <Button size="xs" color="failure" className="flex-1" onClick={() => handleDelete(evento.id)}>
-                              Excluir
-                            </Button>
+                        {evento.artista && (
+                          <p>
+                            <strong>Artista:</strong> <span className="font-semibold text-slate-700 dark:text-slate-300">{evento.artista.nome}</span>
+                          </p>
+                        )}
+
+                        {evento.espaco && (
+                          <div>
+                            <p><strong>Espaço:</strong> <span className="font-semibold text-slate-700 dark:text-slate-300">{evento.espaco.nome}</span></p>
+                            {evento.espaco.endereco && <p className="text-[11px] text-slate-400 truncate italic">{evento.espaco.endereco}</p>}
                           </div>
                         )}
                       </div>
+
+                    {/* 5. Footer Actions */}
+                    <div className="mt-auto pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap gap-2 justify-between items-center">
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <Button size="xs" color="purple" onClick={() => setDetailEvent(evento)}>
+                          Ver Detalhes
+                        </Button>
+                        {user && (user.role === "ADMIN" || user.email === evento.criadoPorEmail) && (
+                          <>
+                            <Button size="xs" color="gray" onClick={() => fillForm(evento)}>
+                              Editar
+                            </Button>
+                            <Button size="xs" color="failure" onClick={() => handleDelete(evento.id)}>
+                              Excluir
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
                     </div>
                   </Card>
                 );
@@ -413,7 +422,7 @@ export default function EventosPage({ user }: { user: any }) {
               {/* Body */}
               <div className="p-6 overflow-y-auto space-y-4">
                 {detailEvent.fotoUrl && (
-                  <div className="h-48 w-full rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800">
+                  <div className="h-70 w-full rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800">
                     <img src={detailEvent.fotoUrl} alt={detailEvent.nome} className="w-full h-full object-cover" />
                   </div>
                 )}
