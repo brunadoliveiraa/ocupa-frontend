@@ -107,8 +107,8 @@ export default function App() {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <Button color="indigo" size="lg" onClick={() => setRoute("artistas")}>Explorar Artistas</Button>
-                  <Button color="emerald" size="lg" onClick={() => setRoute("espacos")}>Ver Espaços Livres</Button>
+                  <Button color="indigo" size="lg" onClick={() => setRoute("artistas")}>Conhecer Artistas</Button>
+                  <Button color="emerald" size="lg" onClick={() => setRoute("espacos")}>Explorar Espaços Culturais</Button>
                 </div>
               </div>
 
