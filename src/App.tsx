@@ -1,7 +1,5 @@
 import {
   Badge,
-  Button,
-  Card,
   DarkThemeToggle,
   Navbar,
   NavbarBrand,
@@ -91,18 +89,20 @@ export default function App() {
       default:
         return (
           <main>
-            {/* ═══════ HERO BANNER ═══════ */}
-            <section className="relative w-full h-[420px] sm:h-[500px] overflow-hidden grain-overlay">
-              <img
-                src="/hero_banner.jpg"
-                alt="Arte urbana periférica"
-                className="absolute inset-0 w-full h-full object-cover grayscale"
-              />
-              <div className="absolute inset-0 bg-gradient-to-b from-orange-700/60 via-orange-600/40 to-orange-900/70 mix-blend-multiply" />
-            </section>
+            {/* ═══════ HERO BANNER (Margem alinhada com a Navbar, mais larga que o texto) ═══════ */}
+            <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+              <section className="relative w-full h-[400px] sm:h-[480px] overflow-hidden rounded-md grain-overlay">
+                <img
+                  src="/hero_banner.jpg"
+                  alt="Arte urbana periférica"
+                  className="absolute inset-0 w-full h-full object-cover grayscale"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-[#e76e3c]/60 via-[#e76e3c]/40 to-orange-950/70 mix-blend-multiply" />
+              </section>
+            </div>
 
-            {/* ═══════ STATS + QUEM SOMOS ═══════ */}
-            <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
+            {/* ═══════ STATS + QUEM SOMOS (Margem de texto max-w-5xl) ═══════ */}
+            <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 -mt-28 relative z-10">
               <div className="grid gap-8 lg:grid-cols-[1.1fr_0.05fr_0.85fr] items-start">
                 {/* Stats Card */}
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-sm p-6 shadow-xl space-y-4">
@@ -113,7 +113,7 @@ export default function App() {
                     <Badge color="failure" className="font-body text-xs uppercase tracking-wider">Ao Vivo</Badge>
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                    Acompanhe aqui em tempo real o impacto do Ocupa. Ao fortalecer as redes culturais locais, potencializamos oportunidades econômicas e a redução de desigualdades (ODS 8 e 10).
+                    Acompanhe aqui em tempo real o impacto do <span className="font-display text-ocupa">OCUPA</span>. Ao fortalecer as redes culturais locais, potencializamos oportunidades econômicas e a redução de desigualdades (ODS 8 e 10).
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     {[
@@ -124,7 +124,7 @@ export default function App() {
                     ].map((item) => (
                       <div key={item.label} className="border border-slate-200 dark:border-slate-700 rounded-sm p-3">
                         <p className="text-xs font-body text-slate-500 dark:text-slate-400">{item.label}</p>
-                        <p className="text-3xl font-display text-orange-600 dark:text-orange-500">+{item.value}</p>
+                        <p className="text-3xl font-display text-ocupa">+{item.value}</p>
                       </div>
                     ))}
                   </div>
@@ -138,12 +138,12 @@ export default function App() {
                 </div>
 
                 {/* Quem Somos */}
-                <div className="space-y-4 pt-4 lg:pt-36">
+                <div className="space-y-4 pt-4 lg:pt-32">
                   <h2 className="font-display text-4xl lg:text-5xl tracking-wider uppercase leading-tight text-slate-900 dark:text-white">
                     Quem Somos
                   </h2>
                   <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                    Uma <strong className="text-orange-600 dark:text-orange-500">Plataforma de Gestão de Ecossistemas Culturais</strong>
+                    Uma <strong className="text-ocupa">Plataforma de Gestão de Ecossistemas Culturais</strong>
                   </p>
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                     Reunimos várias funcionalidades (que hoje estão dispersas em diferentes sistemas) para facilitar a produção, organização e divulgação da arte.
@@ -153,7 +153,7 @@ export default function App() {
             </section>
 
             {/* ═══════ PLATAFORMA + CTAs ═══════ */}
-            <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 space-y-8">
+            <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16 space-y-8">
               <div>
                 <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed max-w-2xl">
                   Plataforma feita para <strong className="text-slate-900 dark:text-white">artistas, coletivos</strong> e <strong className="text-slate-900 dark:text-white">espaços periféricos</strong>. Um espaço para descobrir talentos, ocupar territórios, fortalecer conexões e ampliar oportunidades culturais.
@@ -163,21 +163,21 @@ export default function App() {
               <div className="flex flex-wrap items-center gap-6">
                 <button
                   onClick={() => setRoute("register")}
-                  className="font-display text-lg tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-orange-600 dark:hover:text-orange-500 transition-colors underline underline-offset-4"
+                  className="font-display text-xl tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-ocupa transition-colors underline underline-offset-4"
                 >
                   Cadastre-se
                 </button>
                 <span className="w-2 h-2 rounded-full bg-slate-900 dark:bg-slate-400" />
                 <button
                   onClick={() => setRoute("artistas")}
-                  className="font-display text-lg tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-orange-600 dark:hover:text-orange-500 transition-colors underline underline-offset-4"
+                  className="font-display text-xl tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-ocupa transition-colors underline underline-offset-4"
                 >
                   Contrate
                 </button>
                 <span className="w-2 h-2 rounded-full bg-slate-900 dark:bg-slate-400" />
                 <button
                   onClick={() => setRoute("espacos")}
-                  className="font-display text-lg tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-orange-600 dark:hover:text-orange-500 transition-colors underline underline-offset-4"
+                  className="font-display text-xl tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-ocupa transition-colors underline underline-offset-4"
                 >
                   Conheça Espaços
                 </button>
@@ -186,14 +186,14 @@ export default function App() {
 
             {/* ═══════ COMO FUNCIONA ═══════ */}
             <section className="border-t border-slate-200 dark:border-slate-800">
-              <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 space-y-8">
+              <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16 space-y-8">
                 <div className="space-y-2">
-                  <span className="font-display text-sm tracking-[0.3em] uppercase text-orange-600 dark:text-orange-500">
+                  <span className="font-display text-base tracking-[0.3em] uppercase text-ocupa">
                     Como Funciona?
                   </span>
                   <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
                     O que você encontra no{" "}
-                    <span className="text-orange-600 dark:text-orange-500">Ocupa</span>
+                    <span className="font-display text-ocupa">OCUPA</span>
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400 max-w-lg">
                     Tudo o que movimenta a cultura periférica em um único lugar.
@@ -226,9 +226,9 @@ export default function App() {
                     <div
                       key={item.title}
                       onClick={item.action}
-                      className="border border-slate-200 dark:border-slate-700 rounded-sm p-5 hover:border-orange-500 dark:hover:border-orange-500 hover:shadow-md transition-all cursor-pointer group"
+                      className="border border-slate-200 dark:border-slate-700 rounded-sm p-5 hover:border-ocupa hover:shadow-md transition-all cursor-pointer group"
                     >
-                      <h3 className="font-display text-xl tracking-wider uppercase text-slate-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-500 transition-colors">
+                      <h3 className="font-display text-xl tracking-wider uppercase text-slate-900 dark:text-white group-hover:text-ocupa transition-colors">
                         {item.title}
                       </h3>
                       <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
@@ -242,7 +242,7 @@ export default function App() {
 
             {/* ═══════ O QUE QUEREMOS ═══════ */}
             <section className="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
-              <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16">
+              <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16">
                 <div className="grid gap-8 lg:grid-cols-[1fr_0.05fr_1fr] items-start">
                   {/* Photo */}
                   <div className="relative rounded-sm overflow-hidden grain-overlay h-[400px]">
@@ -271,7 +271,7 @@ export default function App() {
                         E como fazemos isso?
                       </p>
                       <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                        O <strong className="text-orange-600 dark:text-orange-500">OCUPA</strong> cria a infraestrutura digital que integra e divulga artistas, espaços, eventos e oportunidades, estimulando o{" "}
+                        O <strong className="font-display text-ocupa">OCUPA</strong> cria a infraestrutura digital que integra e divulga artistas, espaços, eventos e oportunidades, estimulando o{" "}
                         <strong className="text-slate-900 dark:text-white">crescimento da economia criativa</strong>.
                       </p>
                     </div>
@@ -287,76 +287,75 @@ export default function App() {
   return (
     <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col justify-between">
       <div>
-        {/* ═══════ NAVBAR ═══════ */}
-        <Navbar fluid rounded className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95 sticky top-0 z-50 backdrop-blur-md">
-          <NavbarBrand href="#" onClick={() => setRoute("home")}>
-            <div className="flex flex-col leading-none">
-              <span className="font-display text-3xl tracking-wider text-slate-900 dark:text-white">
-                OCUPA
-              </span>
-              <span className="font-body text-[9px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 -mt-1">
-                O território fala o Ocupa conecta
-              </span>
+        {/* ═══════ NAVBAR (Alinhada com a imagem principal em max-w-6xl) ═══════ */}
+        <Navbar fluid rounded className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95 sticky top-0 z-50 backdrop-blur-md px-0 py-2">
+          <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <NavbarBrand href="#" onClick={() => setRoute("home")} className="py-1">
+              <img
+                src="/logo_ocupa.svg"
+                alt="OCUPA - O território fala o Ocupa conecta"
+                className="h-10 sm:h-12 w-auto object-contain"
+              />
+            </NavbarBrand>
+            
+            <div className="flex items-center gap-4 md:order-2">
+              <DarkThemeToggle />
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setRoute("painel")}
+                    className="font-display text-base sm:text-lg tracking-widest uppercase text-slate-900 dark:text-white hover:text-ocupa transition-colors"
+                  >
+                    Painel
+                  </button>
+                  <button
+                    onClick={() => {
+                      window.localStorage.removeItem("ocupaUser");
+                      setUser(null);
+                      setRoute("home");
+                    }}
+                    className="font-display text-base sm:text-lg tracking-widest uppercase text-slate-500 hover:text-ocupa transition-colors"
+                  >
+                    Sair
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setRoute("login")}
+                    className="font-display text-base sm:text-lg tracking-widest uppercase text-slate-900 dark:text-white hover:text-ocupa transition-colors"
+                  >
+                    Entrar
+                  </button>
+                  <button
+                    onClick={() => setRoute("register")}
+                    className="font-display text-base sm:text-lg tracking-widest uppercase text-slate-900 dark:text-white hover:text-ocupa transition-colors"
+                  >
+                    Cadastrar
+                  </button>
+                </div>
+              )}
+              <NavbarToggle />
             </div>
-          </NavbarBrand>
-          
-          <div className="flex items-center gap-3 md:order-2">
-            <DarkThemeToggle />
-            {user ? (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setRoute("painel")}
-                  className="font-display text-xs tracking-widest uppercase text-slate-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-500 transition-colors"
-                >
-                  Painel
-                </button>
-                <button
-                  onClick={() => {
-                    window.localStorage.removeItem("ocupaUser");
-                    setUser(null);
-                    setRoute("home");
-                  }}
-                  className="font-display text-xs tracking-widest uppercase text-slate-500 hover:text-orange-600 dark:hover:text-orange-500 transition-colors"
-                >
-                  Sair
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setRoute("login")}
-                  className="font-display text-xs tracking-widest uppercase text-slate-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-500 transition-colors"
-                >
-                  Entrar
-                </button>
-                <button
-                  onClick={() => setRoute("register")}
-                  className="font-display text-xs tracking-widest uppercase text-slate-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-500 transition-colors"
-                >
-                  Cadastrar
-                </button>
-              </div>
-            )}
-            <NavbarToggle />
-          </div>
 
-          <NavbarCollapse>
-            <NavbarLink active={route === "home"} onClick={() => setRoute("home")} className="cursor-pointer font-display tracking-widest uppercase text-xs">
-              Home
-            </NavbarLink>
-            <NavbarLink active={route === "artistas"} onClick={() => setRoute("artistas")} className="cursor-pointer font-display tracking-widest uppercase text-xs">
-              Artistas
-            </NavbarLink>
-            <NavbarLink active={route === "espacos"} onClick={() => setRoute("espacos")} className="cursor-pointer font-display tracking-widest uppercase text-xs">
-              Espaços
-            </NavbarLink>
-            <NavbarLink active={route === "eventos"} onClick={() => setRoute("eventos")} className="cursor-pointer font-display tracking-widest uppercase text-xs">
-              Agenda
-            </NavbarLink>
-            <NavbarLink active={route === "oportunidades"} onClick={() => setRoute("oportunidades")} className="cursor-pointer font-display tracking-widest uppercase text-xs">
-              Oportunidades
-            </NavbarLink>
-          </NavbarCollapse>
+            <NavbarCollapse>
+              <NavbarLink active={route === "home"} onClick={() => setRoute("home")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
+                Home
+              </NavbarLink>
+              <NavbarLink active={route === "artistas"} onClick={() => setRoute("artistas")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
+                Artistas
+              </NavbarLink>
+              <NavbarLink active={route === "espacos"} onClick={() => setRoute("espacos")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
+                Espaços
+              </NavbarLink>
+              <NavbarLink active={route === "eventos"} onClick={() => setRoute("eventos")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
+                Agenda
+              </NavbarLink>
+              <NavbarLink active={route === "oportunidades"} onClick={() => setRoute("oportunidades")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
+                Oportunidades
+              </NavbarLink>
+            </NavbarCollapse>
+          </div>
         </Navbar>
         
         {content}

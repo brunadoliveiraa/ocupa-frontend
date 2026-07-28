@@ -16,6 +16,18 @@ body {
   font-family: 'Outfit', sans-serif;
 }
 
+.text-ocupa {
+  color: #e76e3c;
+}
+
+.bg-ocupa {
+  background-color: #e76e3c;
+}
+
+.border-ocupa {
+  border-color: #e76e3c;
+}
+
 .leaflet-container {
   z-index: 1;
 }
