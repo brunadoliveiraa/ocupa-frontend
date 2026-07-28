@@ -93,11 +93,10 @@ export default function App() {
             <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
               <section className="relative w-full h-[380px] sm:h-[460px] overflow-hidden rounded-md grain-overlay">
                 <img
-                  src="/hero_banner.jpg"
+                  src="/topo.jpeg"
                   alt="Arte urbana periférica"
-                  className="absolute inset-0 w-full h-full object-cover grayscale"
+                  className="absolute inset-0 w-full h-full"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-[#e76e3c]/60 via-[#e76e3c]/40 to-orange-950/70 mix-blend-multiply" />
               </section>
             </div>
 
