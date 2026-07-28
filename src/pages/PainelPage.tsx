@@ -228,20 +228,22 @@ export default function PainelPage({ user }: PainelPageProps) {
     <div className="min-h-screen bg-slate-50 py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Painel de Controle</h1>
-          <p className="text-slate-600 dark:text-slate-400">
-            Olá, <span className="font-semibold text-indigo-600 dark:text-indigo-400">{user?.nome}</span>! Gerencie seus orçamentos e perfil de empreendedor.
+          <h1 className="font-display text-4xl sm:text-5xl uppercase tracking-wider text-slate-900 dark:text-white">
+            Painel de Controle
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed">
+            Olá, <span className="font-semibold text-ocupa">{user?.nome}</span>! Gerencie seus orçamentos e perfil de empreendedor.
           </p>
         </div>
 
         {/* Tab Selection */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800">
+        <div className="flex border-b border-slate-200 dark:border-slate-800 flex-wrap gap-2">
           <button
             onClick={() => setActiveTab("dashboard")}
-            className={`px-6 py-3 font-medium transition ${
+            className={`px-6 py-3 font-display text-base tracking-wider uppercase transition cursor-pointer border-b-2 -mb-[2px] ${
               activeTab === "dashboard"
-                ? "border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                ? "border-[#e76e3c] text-[#e76e3c] font-bold"
+                : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400"
             }`}
           >
             Métricas & Visão Geral
@@ -250,10 +252,10 @@ export default function PainelPage({ user }: PainelPageProps) {
           {user?.artistaId && (
             <button
               onClick={() => setActiveTab("portfolio")}
-              className={`px-6 py-3 font-medium transition ${
+              className={`px-6 py-3 font-display text-base tracking-wider uppercase transition cursor-pointer border-b-2 -mb-[2px] ${
                 activeTab === "portfolio"
-                  ? "border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                  ? "border-[#e76e3c] text-[#e76e3c] font-bold"
+                  : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400"
               }`}
             >
               Meu Portfólio
@@ -262,16 +264,16 @@ export default function PainelPage({ user }: PainelPageProps) {
 
           <button
             onClick={() => setActiveTab("requests")}
-            className={`px-6 py-3 font-medium transition ${
+            className={`px-6 py-3 font-display text-base tracking-wider uppercase transition cursor-pointer border-b-2 -mb-[2px] ${
               activeTab === "requests"
-                ? "border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                ? "border-[#e76e3c] text-[#e76e3c] font-bold"
+                : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400"
             }`}
           >
             Orçamentos {requests.filter(r => r.status === "PENDING").length > 0 && (
-              <Badge color="failure" size="xs" className="inline ml-1">
+              <span className="font-display text-xs px-2 py-0.5 rounded bg-red-600 text-white uppercase tracking-wider inline ml-1">
                 {requests.filter(r => r.status === "PENDING").length}
-              </Badge>
+              </span>
             )}
           </button>
         </div>

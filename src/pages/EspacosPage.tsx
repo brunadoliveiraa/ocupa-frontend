@@ -1,20 +1,27 @@
-import { Alert, Badge, Button, Card, Label, TextInput, ToggleSwitch } from "flowbite-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Alert, Label, TextInput, ToggleSwitch } from "flowbite-react";
+import { useEffect, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-// Declare Leaflet global object
-declare const L: any;
+interface EspacosPageProps {
+  user?: any;
+}
 
-export default function EspacosPage({ user }: { user: any }) {
+export default function EspacosPage({ user }: EspacosPageProps) {
   const [espacos, setEspacos] = useState<any[]>([]);
-  const [selected, setSelected] = useState<any | null>(null);
-  
-  // Fields
+  const [showForm, setShowForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  // Form states
   const [nome, setNome] = useState("");
   const [endereco, setEndereco] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [capacidade, setCapacidade] = useState(0);
+  const [capacidade, setCapacidade] = useState<number>(0);
+  const [latitude, setLatitude] = useState("-23.55052");
+  const [longitude, setLongitude] = useState("-46.633308");
+
+  // Infrastructure toggles
   const [cobertura, setCobertura] = useState(false);
   const [iluminacao, setIluminacao] = useState(false);
   const [energia, setEnergia] = useState(false);
@@ -22,96 +29,95 @@ export default function EspacosPage({ user }: { user: any }) {
   const [permiteGrafite, setPermiteGrafite] = useState(false);
   const [permiteBatalha, setPermiteBatalha] = useState(false);
   const [permiteDanca, setPermiteDanca] = useState(false);
-  const [latitude, setLatitude] = useState("-23.55052");
-  const [longitude, setLongitude] = useState("-46.633308");
-  
+
+  // Media gallery states
+  const [mediaList, setMediaList] = useState<{ url: string; caption: string }[]>([]);
+  const [mediaUrlInput, setMediaUrlInput] = useState("");
+  const [mediaCaptionInput, setMediaCaptionInput] = useState("");
+
+  const [map, setMap] = useState<any>(null);
+  const [markers, setMarkers] = useState<any[]>([]);
+  const [tempMarker, setTempMarker] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
-
-  // Space media states
-  const [mediaList, setMediaList] = useState<{ mediaType: string; url: string; caption: string }[]>([]);
-  const [newMediaCaption, setNewMediaCaption] = useState("");
-
-  const convertToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
-  };
 
   useEffect(() => {
-    fetchAll();
+    fetchEspacos();
   }, []);
 
-  // Initialize and Update Map
+  // Initialize Leaflet Map once
   useEffect(() => {
-    const mapElement = document.getElementById("map");
-    if (!mapElement || typeof L === "undefined") return;
+    if (typeof window === "undefined") return;
+    const L = (window as any).L;
+    if (!L) return;
+    const mapContainer = document.getElementById("map");
+    if (!mapContainer) return;
 
-    // Create Map centered in Sao Paulo (default)
-    const map = L.map("map").setView([-23.55052, -46.633308], 13);
-    
-    // Load OpenStreetMap tiles
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
-    }).addTo(map);
-
-    // Map click event to auto-fill latitude and longitude
-    map.on("click", (e: any) => {
-      const { lat, lng } = e.latlng;
-      setLatitude(lat.toFixed(6));
-      setLongitude(lng.toFixed(6));
-    });
-
-    // Custom modern pins using Leaflet divIcon (fully styled with Tailwind CSS)
-    const spaceIcon = L.divIcon({
-      html: `<div class="w-8 h-8 bg-emerald-500 hover:bg-emerald-600 border-2 border-white rounded-full shadow-lg flex items-center justify-center text-white transition-all transform hover:scale-115">
-               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-               </svg>
-             </div>`,
-      className: "custom-leaflet-pin",
-      iconSize: [32, 32],
-      iconAnchor: [16, 32]
-    });
-
-    // Populate markers on map
-    espacos.forEach((espaco) => {
-      if (espaco.latitude && espaco.longitude) {
-        L.marker([espaco.latitude, espaco.longitude], { icon: spaceIcon })
-          .addTo(map)
-          .bindPopup(
-            `<div class="p-2 space-y-1">
-              <h4 class="font-bold text-slate-800 text-sm">${espaco.nome}</h4>
-              <p class="text-xs text-slate-500">${espaco.endereco}</p>
-              <p class="text-xs text-slate-600 font-semibold mt-1">Capacidade: ${espaco.capacidade || 0} pessoas</p>
-             </div>`
-          );
-      }
-    });
-
-    // Adjust map bounds if spaces exist
-    if (espacos.length > 0) {
-      const validCoords = espacos.filter(e => e.latitude && e.longitude).map(e => [e.latitude, e.longitude]);
-      if (validCoords.length > 0) {
-        map.fitBounds(validCoords, { padding: [50, 50], maxZoom: 15 });
-      }
+    if ((mapContainer as any)._leaflet_id) {
+      (mapContainer as any)._leaflet_id = null;
     }
 
-    // Cleanup Leaflet map when component unmounts or before re-running
-    return () => {
-      map.remove();
-    };
-  }, [espacos]);
+    const initialMap = L.map("map").setView([-23.55052, -46.633308], 11);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(initialMap);
 
-  async function fetchAll() {
+    initialMap.on("click", (e: any) => {
+      const lat = e.latlng.lat.toFixed(6);
+      const lng = e.latlng.lng.toFixed(6);
+      setLatitude(lat);
+      setLongitude(lng);
+
+      if (tempMarker) {
+        tempMarker.setLatLng(e.latlng);
+      } else {
+        const marker = L.marker(e.latlng).addTo(initialMap).bindPopup("Local selecionado").openPopup();
+        setTempMarker(marker);
+      }
+    });
+
+    setMap(initialMap);
+
+    return () => {
+      initialMap.remove();
+    };
+  }, []);
+
+  // Render markers when spaces list updates
+  useEffect(() => {
+    if (!map) return;
+    const L = (window as any).L;
+    if (!L) return;
+    markers.forEach((m) => m.remove());
+    const newMarkers: any[] = [];
+
+    espacos.forEach((espaco) => {
+      if (espaco.latitude && espaco.longitude) {
+        const marker = L.marker([Number(espaco.latitude), Number(espaco.longitude)])
+          .addTo(map)
+          .bindPopup(`
+            <div style="font-family: inherit;">
+              <strong style="font-size: 14px; color: #e76e3c;">${espaco.nome}</strong><br/>
+              <span style="font-size: 12px; color: #666;">${espaco.endereco || ""}</span><br/>
+              <p style="font-size: 11px; margin-top: 4px;">Capacidade: ${espaco.capacidade || "N/A"} pessoas</p>
+            </div>
+          `);
+        newMarkers.push(marker);
+      }
+    });
+
+    setMarkers(newMarkers);
+
+    if (newMarkers.length > 0) {
+      const group = L.featureGroup(newMarkers);
+      map.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 15 });
+    }
+  }, [map, espacos]);
+
+  async function fetchEspacos() {
     try {
-      const response = await fetch(`${API_URL}/api/espacos`);
-      if (response.ok) {
-        const data = await response.json();
+      const res = await fetch(`${API_URL}/api/espacos`);
+      if (res.ok) {
+        const data = await res.json();
         setEspacos(data);
       }
     } catch (err) {
@@ -119,14 +125,13 @@ export default function EspacosPage({ user }: { user: any }) {
     }
   }
 
-  const isEditing = useMemo(() => selected !== null, [selected]);
-
   function resetForm() {
-    setSelected(null);
     setNome("");
     setEndereco("");
     setDescricao("");
     setCapacidade(0);
+    setLatitude("-23.55052");
+    setLongitude("-46.633308");
     setCobertura(false);
     setIluminacao(false);
     setEnergia(false);
@@ -134,20 +139,25 @@ export default function EspacosPage({ user }: { user: any }) {
     setPermiteGrafite(false);
     setPermiteBatalha(false);
     setPermiteDanca(false);
-    setLatitude("-23.55052");
-    setLongitude("-46.633308");
-    setError(null);
-    setShowForm(false);
     setMediaList([]);
-    setNewMediaCaption("");
+    setMediaUrlInput("");
+    setMediaCaptionInput("");
+    setIsEditing(false);
+    setSelectedId(null);
+    setShowForm(false);
+    if (tempMarker) {
+      tempMarker.remove();
+      setTempMarker(null);
+    }
   }
 
   function fillForm(espaco: any) {
-    setSelected(espaco);
     setNome(espaco.nome || "");
     setEndereco(espaco.endereco || "");
     setDescricao(espaco.descricao || "");
     setCapacidade(espaco.capacidade || 0);
+    setLatitude(espaco.latitude || "-23.55052");
+    setLongitude(espaco.longitude || "-46.633308");
     setCobertura(espaco.cobertura || false);
     setIluminacao(espaco.iluminacao || false);
     setEnergia(espaco.energia || false);
@@ -155,18 +165,27 @@ export default function EspacosPage({ user }: { user: any }) {
     setPermiteGrafite(espaco.permiteGrafite || false);
     setPermiteBatalha(espaco.permiteBatalha || false);
     setPermiteDanca(espaco.permiteDanca || false);
-    setLatitude(espaco.latitude?.toString() || "-23.55052");
-    setLongitude(espaco.longitude?.toString() || "-46.633308");
-    setMediaList(espaco.mediaItems || []);
-    setError(null);
+
+    if (espaco.mediaItems && Array.isArray(espaco.mediaItems)) {
+      setMediaList(espaco.mediaItems.map((m: any) => ({ url: m.url, caption: m.caption || "" })));
+    } else {
+      setMediaList([]);
+    }
+
+    setIsEditing(true);
+    setSelectedId(espaco.id);
     setShowForm(true);
-    
-    // Smooth scroll to form
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
+  function handleAddMedia() {
+    if (!mediaUrlInput) return;
+    setMediaList([...mediaList, { url: mediaUrlInput, caption: mediaCaptionInput }]);
+    setMediaUrlInput("");
+    setMediaCaptionInput("");
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
 
     const payload = {
@@ -174,6 +193,8 @@ export default function EspacosPage({ user }: { user: any }) {
       endereco,
       descricao,
       capacidade,
+      latitude,
+      longitude,
       cobertura,
       iluminacao,
       energia,
@@ -181,38 +202,36 @@ export default function EspacosPage({ user }: { user: any }) {
       permiteGrafite,
       permiteBatalha,
       permiteDanca,
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude),
-      criadoPorEmail: isEditing ? selected.criadoPorEmail : (user ? user.email : null),
-      mediaItems: mediaList
+      criadoPorEmail: user?.email,
+      mediaItems: mediaList.map((m) => ({ mediaType: "IMAGE", url: m.url, caption: m.caption })),
     };
 
-    const method = isEditing ? "PUT" : "POST";
-    const url = isEditing ? `${API_URL}/api/espacos/${selected.id}` : `${API_URL}/api/espacos`;
-
     try {
-      const response = await fetch(url, {
+      const url = isEditing ? `${API_URL}/api/espacos/${selectedId}` : `${API_URL}/api/espacos`;
+      const method = isEditing ? "PUT" : "POST";
+
+      const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.error || "Erro ao salvar espaço");
-      }
+      if (!res.ok) throw new Error("Erro ao salvar espaço cultural");
 
-      await fetchAll();
       resetForm();
+      fetchEspacos();
     } catch (err: any) {
-      setError(err.message || "Erro de conexão ao salvar espaço");
+      setError(err.message || "Erro ao salvar espaço");
     }
   }
 
   async function handleDelete(id: number) {
+    if (!confirm("Tem certeza que deseja remover este espaço?")) return;
     try {
-      await fetch(`${API_URL}/api/espacos/${id}`, { method: "DELETE" });
-      await fetchAll();
+      const res = await fetch(`${API_URL}/api/espacos/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        fetchEspacos();
+      }
     } catch (err) {
       console.error("Erro ao deletar espaço:", err);
     }
@@ -223,24 +242,29 @@ export default function EspacosPage({ user }: { user: any }) {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-6">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Espaços Culturais</h1>
-            <p className="text-slate-600 dark:text-slate-400">
+            <h1 className="font-display text-4xl sm:text-5xl uppercase tracking-wider leading-tight text-slate-900 dark:text-white">
+              Espaços Culturais
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed">
               Locais públicos, praças e pontos mapeados para intervenções artísticas periféricas.
             </p>
           </div>
           {user && (
-            <Button color="amber" onClick={() => { isEditing ? resetForm() : setShowForm(!showForm); }}>
+            <button
+              onClick={() => { isEditing ? resetForm() : setShowForm(!showForm); }}
+              className="bg-[#e76e3c] hover:bg-[#d65d2b] text-white font-display text-lg tracking-wider uppercase rounded-sm px-4 py-2 transition-colors cursor-pointer whitespace-nowrap self-start sm:self-auto"
+            >
               {showForm ? "Esconder Formulário" : "Mapear Novo Espaço"}
-            </Button>
+            </button>
           )}
         </div>
 
         {/* Form panel */}
         {showForm && (
-          <Card className="border-slate-200 dark:border-slate-800">
-            <h2 className="text-xl font-bold border-b pb-2 text-emerald-600 dark:text-emerald-400">
+          <div className="border border-slate-900 dark:border-slate-600 rounded-sm p-6 bg-white dark:bg-slate-900 space-y-6">
+            <h2 className="font-display text-2xl uppercase tracking-wider text-[#e76e3c] border-b border-slate-200 dark:border-slate-800 pb-2">
               {isEditing ? "Editar Detalhes do Espaço" : "Mapear Novo Espaço Periférico"}
             </h2>
             
@@ -283,8 +307,8 @@ export default function EspacosPage({ user }: { user: any }) {
 
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-sm uppercase text-slate-500">Atributos Físicos</h3>
-                  <div className="grid grid-cols-2 gap-4 bg-slate-100/50 dark:bg-slate-900/50 p-4 rounded-lg">
+                  <h3 className="font-display text-sm uppercase text-slate-500 tracking-wider">Atributos Físicos</h3>
+                  <div className="grid grid-cols-2 gap-4 bg-slate-100/50 dark:bg-slate-800/50 p-4 rounded-sm border border-slate-200 dark:border-slate-700">
                     <ToggleSwitch checked={cobertura} label="Cobertura" onChange={() => setCobertura(!cobertura)} />
                     <ToggleSwitch checked={iluminacao} label="Iluminação" onChange={() => setIluminacao(!iluminacao)} />
                     <ToggleSwitch checked={energia} label="Energia Elétrica" onChange={() => setEnergia(!energia)} />
@@ -293,112 +317,118 @@ export default function EspacosPage({ user }: { user: any }) {
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-sm uppercase text-slate-500">Atividades Permitidas</h3>
-                  <div className="grid grid-cols-2 gap-4 bg-slate-100/50 dark:bg-slate-900/50 p-4 rounded-lg">
+                  <h3 className="font-display text-sm uppercase text-slate-500 tracking-wider">Atividades Permitidas</h3>
+                  <div className="grid grid-cols-2 gap-4 bg-slate-100/50 dark:bg-slate-800/50 p-4 rounded-sm border border-slate-200 dark:border-slate-700">
                     <ToggleSwitch checked={permiteGrafite} label="Grafite / Mural" onChange={() => setPermiteGrafite(!permiteGrafite)} />
                     <ToggleSwitch checked={permiteBatalha} label="Batalha de Rimas" onChange={() => setPermiteBatalha(!permiteBatalha)} />
                     <ToggleSwitch checked={permiteDanca} label="Danças / B-Boys" onChange={() => setPermiteDanca(!permiteDanca)} />
                   </div>
                 </div>
-              </div>
 
-              {/* Media gallery upload for Espaco */}
-              <div className="lg:col-span-2 space-y-4 border-t pt-4">
-                <h3 className="font-semibold text-md text-emerald-600 dark:text-emerald-400">Galeria de Fotos do Local</h3>
-                <div className="grid gap-3 sm:grid-cols-3 items-end bg-slate-100 dark:bg-slate-900/40 p-4 rounded-lg">
-                  <div className="sm:col-span-2">
-                    <Label htmlFor="spaceFile">Adicionar Imagem</Label>
-                    <input
-                      id="spaceFile"
-                      type="file"
-                      accept="image/*"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          try {
-                            const base64 = await convertToBase64(file);
-                            setMediaList([...mediaList, { mediaType: "IMAGE", url: base64, caption: newMediaCaption }]);
-                            setNewMediaCaption("");
-                            e.target.value = "";
-                          } catch (err) {
-                            console.error("Erro ao converter imagem do espaco:", err);
-                          }
-                        }
-                      }}
-                      className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 bg-white border border-slate-300 rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="spaceMediaCaption">Legenda da Imagem (Opcional)</Label>
+                <div className="space-y-3">
+                  <h3 className="font-display text-sm uppercase text-slate-500 tracking-wider">Galeria de Fotos (URL)</h3>
+                  <div className="flex gap-2">
                     <TextInput
-                      id="spaceMediaCaption"
-                      placeholder="Ex: Fachada, Palco, etc."
-                      value={newMediaCaption}
-                      onChange={(e) => setNewMediaCaption(e.target.value)}
+                      placeholder="https://exemplo.com/foto.jpg"
+                      value={mediaUrlInput}
+                      onChange={(e) => setMediaUrlInput(e.target.value)}
+                      className="flex-1"
                     />
+                    <TextInput
+                      placeholder="Legenda (opcional)"
+                      value={mediaCaptionInput}
+                      onChange={(e) => setMediaCaptionInput(e.target.value)}
+                      className="flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddMedia}
+                      className="bg-[#1b1cbb] hover:bg-[#15169a] text-white font-display text-base tracking-wider uppercase rounded-sm px-3 py-1.5 transition-colors cursor-pointer"
+                    >
+                      Adicionar
+                    </button>
                   </div>
                 </div>
 
-                {mediaList.length > 0 ? (
+                {mediaList.length > 0 && (
                   <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 md:grid-cols-6 mt-4">
                     {mediaList.map((item, idx) => (
-                      <Card key={idx} className="relative overflow-hidden group p-2 border-slate-200 dark:border-slate-800">
-                        <div className="h-20 bg-slate-200 dark:bg-slate-800 flex items-center justify-center rounded overflow-hidden">
+                      <div key={idx} className="relative overflow-hidden group p-2 border border-slate-900 dark:border-slate-700 rounded-sm bg-slate-50 dark:bg-slate-800">
+                        <div className="h-20 bg-slate-200 dark:bg-slate-800 flex items-center justify-center rounded-sm overflow-hidden">
                           <img src={item.url} alt={item.caption} className="w-full h-full object-cover" />
                         </div>
                         <div className="mt-1">
                           <p className="font-semibold text-xs truncate text-slate-700 dark:text-slate-300">{item.caption || "Sem legenda"}</p>
-                          <Button
-                            size="xs"
-                            color="failure"
-                            className="mt-1 w-full"
+                          <button
+                            type="button"
+                            className="mt-1 w-full bg-red-600 hover:bg-red-700 text-white font-display text-xs tracking-wider uppercase rounded-sm py-1 cursor-pointer transition-colors"
                             onClick={() => setMediaList(mediaList.filter((_, i) => i !== idx))}
                           >
                             Remover
-                          </Button>
+                          </button>
                         </div>
-                      </Card>
+                      </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-sm text-slate-500 italic">Nenhuma foto anexada a este espaço.</p>
                 )}
               </div>
 
               {error && <Alert color="failure" className="lg:col-span-2">{error}</Alert>}
 
               <div className="lg:col-span-2 flex gap-3 pt-2">
-                <Button type="submit" color="amber">{isEditing ? "Atualizar" : "Salvar Espaço"}</Button>
-                <Button color="gray" onClick={resetForm}>Cancelar</Button>
+                <button
+                  type="submit"
+                  className="bg-[#e76e3c] hover:bg-[#d65d2b] text-white font-display text-lg tracking-wider uppercase rounded-sm px-5 py-2 transition-colors cursor-pointer"
+                >
+                  {isEditing ? "Atualizar" : "Salvar Espaço"}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-800 dark:text-slate-200 font-display text-lg tracking-wider uppercase rounded-sm px-5 py-2 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
               </div>
             </form>
-          </Card>
+          </div>
         )}
 
         {/* Map and Directory Container */}
         <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
           {/* Map display */}
-          <Card className="p-0 overflow-hidden border-slate-200 dark:border-slate-800">
-            <h3 className="text-lg font-bold p-4 border-b border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200">Mapeamento Georreferenciado dos Ativos (Mapa Afetivo)</h3>
-            <div id="map" className="w-full h-[450px] rounded-b-lg"></div>
-          </Card>
+          <div className="border border-slate-900 dark:border-slate-600 rounded-sm overflow-hidden bg-white dark:bg-slate-900 p-0">
+            <h3 className="font-display text-xl uppercase tracking-wider p-4 border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+              Mapeamento Afetivo de Espaços
+            </h3>
+            <div id="map" className="w-full h-[450px]"></div>
+          </div>
 
           {/* Spaces directory */}
           <div className="space-y-4 max-h-[520px] overflow-y-auto pr-2">
-            <h3 className="text-lg font-bold border-b border-slate-200 dark:border-slate-700 pb-2 text-slate-800 dark:text-slate-200">Lista de Espaços</h3>
+            <h3 className="font-display text-xl uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 pb-2 text-slate-900 dark:text-white">
+              Lista de Espaços
+            </h3>
             
             {espacos.length > 0 ? (
               espacos.map((espaco) => (
-                <Card key={espaco.id} className="border-slate-200 dark:border-slate-800 shadow-sm hover:shadow">
-                  <div className="flex items-start justify-between">
+                <div
+                  key={espaco.id}
+                  className="border border-slate-900 dark:border-slate-600 rounded-sm p-4 bg-white dark:bg-slate-900 hover:border-ocupa hover:shadow-md transition-all cursor-pointer group space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h2 className="text-lg font-bold">{espaco.nome}</h2>
+                      <h2 className="font-display text-xl uppercase tracking-wider text-slate-900 dark:text-white group-hover:text-ocupa transition-colors">
+                        {espaco.nome}
+                      </h2>
                       <p className="text-xs text-slate-500">{espaco.endereco}</p>
                     </div>
-                    <Badge color="success">{espaco.capacidade || 0} Pessoas</Badge>
+                    <span className="font-display text-xs px-2 py-0.5 rounded bg-[#e76e3c] text-white uppercase tracking-wider whitespace-nowrap">
+                      {espaco.capacidade || 0} Pessoas
+                    </span>
                   </div>
                   
-                  <p className="text-slate-600 dark:text-slate-400 text-xs line-clamp-2 mt-2">
+                  <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed line-clamp-2 text-justify">
                     {espaco.descricao || "Sem descrição cadastrada."}
                   </p>
 
@@ -406,7 +436,7 @@ export default function EspacosPage({ user }: { user: any }) {
                   {espaco.mediaItems && espaco.mediaItems.length > 0 && (
                     <div className="grid grid-cols-3 gap-2 mt-3">
                       {espaco.mediaItems.map((media: any) => (
-                        <div key={media.id} className="h-16 rounded overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 relative group">
+                        <div key={media.id} className="h-16 rounded-sm overflow-hidden border border-slate-900 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 relative group">
                           <img src={media.url} alt={media.caption} className="w-full h-full object-cover" />
                           {media.caption && (
                             <div className="absolute inset-x-0 bottom-0 bg-black/60 text-white text-[10px] truncate p-1 text-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -419,29 +449,38 @@ export default function EspacosPage({ user }: { user: any }) {
                   )}
 
                   <div className="flex flex-wrap gap-1 mt-3">
-                    {espaco.cobertura && <Badge color="indigo" size="xs">Coberto</Badge>}
-                    {espaco.iluminacao && <Badge color="indigo" size="xs">Iluminado</Badge>}
-                    {espaco.energia && <Badge color="indigo" size="xs">Energia</Badge>}
-                    {espaco.banheiro && <Badge color="indigo" size="xs">Banheiro</Badge>}
-                    {espaco.permiteGrafite && <Badge color="success" size="xs">Grafite</Badge>}
-                    {espaco.permiteBatalha && <Badge color="success" size="xs">Batalha</Badge>}
-                    {espaco.permiteDanca && <Badge color="success" size="xs">Dança</Badge>}
+                    {espaco.cobertura && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Coberto</span>}
+                    {espaco.iluminacao && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Iluminado</span>}
+                    {espaco.energia && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Energia</span>}
+                    {espaco.banheiro && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Banheiro</span>}
+                    {espaco.permiteGrafite && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Grafite</span>}
+                    {espaco.permiteBatalha && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Batalha</span>}
+                    {espaco.permiteDanca && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Dança</span>}
                   </div>
 
                   {user && (user.role === "ADMIN" || user.email === espaco.criadoPorEmail) && (
                     <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex gap-2">
-                      <Button size="xs" color="gray" onClick={() => fillForm(espaco)}>Editar</Button>
-                      <Button size="xs" color="failure" onClick={() => handleDelete(espaco.id)}>Excluir</Button>
+                      <button
+                        onClick={() => fillForm(espaco)}
+                        className="bg-[#1b1cbb] hover:bg-[#15169a] text-white font-display text-xs tracking-wider uppercase rounded-sm px-3 py-1 transition-colors cursor-pointer"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(espaco.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white font-display text-xs tracking-wider uppercase rounded-sm px-3 py-1 transition-colors cursor-pointer"
+                      >
+                        Excluir
+                      </button>
                     </div>
                   )}
-                </Card>
+                </div>
               ))
             ) : (
               <p className="text-slate-500 italic text-sm">Nenhum espaço mapeado ainda.</p>
             )}
           </div>
         </div>
-
       </div>
     </div>
   );
