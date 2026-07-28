@@ -106,9 +106,9 @@ export default function App() {
                 
                 {/* ═══════ COLUNA DA ESQUERDA ═══════ */}
                 <div className="space-y-12">
-                  {/* Bloco Topo: Card (deslocado) + IMPACTO colado na direita */}
-                  <div className="flex items-start gap-3 sm:gap-4 ml-6 sm:ml-14 lg:ml-12 flex-shrink-0">
-                    <div className="w-[340px] sm:w-[380px] lg:w-[390px] bg-white dark:bg-slate-900 border border-slate-900 dark:border-slate-600 rounded-sm p-4 sm:p-5 space-y-4">
+                  {/* Bloco Topo: Card (com margens iguais no XS) + IMPACTO (oculto no XS) */}
+                  <div className="flex items-start gap-3 sm:gap-4 mx-6 sm:mx-0 sm:ml-14 lg:ml-12 flex-shrink-0">
+                    <div className="w-full sm:w-[380px] lg:w-[390px] bg-white dark:bg-slate-900 border border-slate-900 dark:border-slate-600 rounded-sm p-4 sm:p-5 space-y-4">
                       <div className="flex items-center justify-between">
                         <h2 className="font-display text-xl sm:text-2xl tracking-wider uppercase text-slate-900 dark:text-white">
                           Ativos do Ecossistema
@@ -137,16 +137,16 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* IMPACTO vertical text */}
-                    <div className="pt-28 sm:pt-32 flex-shrink-0">
+                    {/* IMPACTO vertical text: Oculto no XS (hidden sm:block) para evitar quebra de layout */}
+                    <div className="hidden sm:block pt-28 sm:pt-32 flex-shrink-0">
                       <span className="vertical-text font-display text-4xl sm:text-5xl tracking-[0.25em] text-slate-900 dark:text-white select-none whitespace-nowrap">
                         IMPACTO
                       </span>
                     </div>
                   </div>
 
-                  {/* Bloco Inferior: Plataforma + CTAs + Como Funciona (mesmo recuo e largura exatos) */}
-                  <div className="ml-6 sm:ml-14 lg:ml-12 w-[340px] sm:w-[380px] lg:w-[390px] space-y-8">
+                  {/* Bloco Inferior: Plataforma + CTAs + Como Funciona (Assume 100% de largura abaixo de lg, e lg:w-[390px] no desktop) */}
+                  <div className="px-6 sm:px-14 lg:px-0 lg:ml-12 w-full lg:w-[390px] space-y-8">
                     {/* Descrição */}
                     <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed text-justify">
                       Plataforma feita para <strong className="text-slate-900 dark:text-white font-bold">artistas, coletivos</strong> e <strong className="text-slate-900 dark:text-white font-bold">espaços periféricos</strong>. Um espaço para descobrir talentos, ocupar territórios, fortalecer conexões e ampliar oportunidades culturais.
@@ -157,21 +157,21 @@ export default function App() {
                       <div className="flex flex-wrap items-center gap-3">
                         <button
                           onClick={() => setRoute("register")}
-                          className="font-display text-xl tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-ocupa transition-colors"
+                          className="cursor-pointer font-display text-xl tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-ocupa transition-colors"
                         >
                           Cadastre-se
                         </button>
                         <span className="w-2 h-2 rounded-full bg-slate-900 dark:bg-slate-400" />
                         <button
                           onClick={() => setRoute("artistas")}
-                          className="font-display text-xl tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-ocupa transition-colors"
+                          className="cursor-pointer font-display text-xl tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-ocupa transition-colors"
                         >
                           Contrate
                         </button>
                         <span className="w-2 h-2 rounded-full bg-slate-900 dark:bg-slate-400" />
                         <button
                           onClick={() => setRoute("espacos")}
-                          className="font-display text-xl tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-ocupa transition-colors"
+                          className="cursor-pointer font-display text-xl tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-ocupa transition-colors"
                         >
                           Conheça Espaços
                         </button>
@@ -380,8 +380,8 @@ export default function App() {
 
       {/* ═══════ FOOTER: PAREDE GRAFITADA SANGRAMENTO SEM BORDA ═══════ */}
       <footer className="border-t border-slate-200 dark:border-slate-800 relative overflow-hidden bg-white dark:bg-slate-950 mt-16 pt-10 pb-6">
-        {/* Parede grafitada de fundo no lado esquerdo */}
-        <div className="absolute left-0 top-0 bottom-0 w-full md:w-2/5 h-full overflow-hidden grain-overlay pointer-events-none opacity-40 md:opacity-80">
+        {/* Parede grafitada de fundo no lado esquerdo (até 38% da tela) */}
+        <div className="absolute left-0 top-0 bottom-0 w-full md:w-[38%] h-full overflow-hidden grain-overlay pointer-events-none opacity-40 md:opacity-80">
           <img
             src="/footer.jpeg"
             alt="Parede grafitada"
@@ -390,113 +390,115 @@ export default function App() {
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white dark:to-slate-950" />
         </div>
 
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+        {/* Conteúdo posicionado à direita da imagem */}
+        <div className="w-full pl-4 md:pl-[40%] pr-6 sm:pr-10 lg:pr-16 relative z-10">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-6 lg:gap-10 w-full">
             
-            {/* Espaçador para a arte do lado esquerdo em telas md+ */}
-            <div className="hidden md:block md:col-span-4 lg:col-span-5" />
+            {/* Coluna 1: Logo OCUPA + Direitos Reservados abaixo */}
+            <div className="space-y-2 max-w-[220px]">
+              <img
+                src="/logo_ocupa.svg"
+                alt="OCUPA"
+                className="h-10 sm:h-12 lg:h-20 w-auto object-contain block dark:hidden cursor-pointer"
+                onClick={() => setRoute("home")}
+              />
+              <img
+                src="/logo_ocupa_branco.svg"
+                alt="OCUPA"
+                className="h-10 sm:h-12 lg:h-20 w-auto object-contain hidden dark:block cursor-pointer"
+                onClick={() => setRoute("home")}
+              />
+            </div>
 
-            {/* Conteúdo à Direita */}
-            <div className="md:col-span-8 lg:col-span-7 space-y-8">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                
-                {/* Coluna 1: Logo & Slogan */}
-                <div className="space-y-3">
-                  <img
-                    src="/logo_ocupa.svg"
-                    alt="OCUPA"
-                    className="h-10 w-auto object-contain block dark:hidden"
-                  />
-                  <img
-                    src="/logo_ocupa_branco.svg"
-                    alt="OCUPA"
-                    className="h-10 w-auto object-contain hidden dark:block"
-                  />
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-body">
-                    Plataforma de Gestão de Ecossistemas Culturais Periféricos.
-                  </p>
-                  <p className="text-[11px] font-display uppercase tracking-widest text-ocupa">
-                    O território fala, o OCUPA conecta.
-                  </p>
-                </div>
+            {/* Coluna 2: CATÁLOGOS (Seção principal no estilo NAVEGAÇÃO) */}
+            <div className="space-y-3">
+              <h3 className="font-display text-base tracking-wider uppercase text-slate-900 dark:text-white">
+                Catálogos
+              </h3>
+              <ul className="space-y-1.5 text-xs">
+                <li>
+                  <button
+                    onClick={() => setRoute("artistas")}
+                    className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap"
+                  >
+                    Artistas
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setRoute("espacos")}
+                    className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap"
+                  >
+                    Espaços
+                  </button>
+                </li>
+              </ul>
+            </div>
 
-                {/* Coluna 2: Navegação Rápida */}
-                <div className="space-y-3">
-                  <h3 className="font-display text-base tracking-wider uppercase text-slate-900 dark:text-white">
-                    Navegação
-                  </h3>
-                  <ul className="space-y-1.5 text-xs">
-                    {[
-                      { label: "Home", target: "home" },
-                      { label: "Artistas", target: "artistas" },
-                      { label: "Espaços", target: "espacos" },
-                      { label: "Agenda Cultural", target: "eventos" },
-                      { label: "Oportunidades", target: "oportunidades" },
-                    ].map((link) => (
-                      <li key={link.target}>
-                        <button
-                          onClick={() => setRoute(link.target)}
-                          className="text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors"
-                        >
-                          {link.label}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+            {/* Coluna 3: NOVIDADES (Seção principal no estilo NAVEGAÇÃO) */}
+            <div className="space-y-3">
+              <h3 className="font-display text-base tracking-wider uppercase text-slate-900 dark:text-white">
+                Novidades
+              </h3>
+              <ul className="space-y-1.5 text-xs">
+                <li>
+                  <button
+                    onClick={() => setRoute("eventos")}
+                    className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap"
+                  >
+                    Agenda
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setRoute("oportunidades")}
+                    className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap"
+                  >
+                    Oportunidades
+                  </button>
+                </li>
+              </ul>
+            </div>
 
-                {/* Coluna 3: ODS ONU */}
-                <div className="space-y-3">
-                  <h3 className="font-display text-base tracking-wider uppercase text-slate-900 dark:text-white">
-                    Compromisso ODS
-                  </h3>
-                  <div className="space-y-2">
-                    <a
-                      href="https://brasil.un.org/pt-br/sdgs/8"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 hover:text-ocupa dark:hover:text-ocupa transition-colors group"
-                    >
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-[#A21942] group-hover:scale-105 transition-transform">
-                        ODS 8
-                      </span>
-                      <span>Trabalho Decente</span>
-                    </a>
-                    <a
-                      href="https://brasil.un.org/pt-br/sdgs/10"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 hover:text-ocupa dark:hover:text-ocupa transition-colors group"
-                    >
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-[#DD1367] group-hover:scale-105 transition-transform">
-                        ODS 10
-                      </span>
-                      <span>Redução de Desigualdades</span>
-                    </a>
-                    <a
-                      href="https://brasil.un.org/pt-br/sdgs/11"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 hover:text-ocupa dark:hover:text-ocupa transition-colors group"
-                    >
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-[#FD9D24] group-hover:scale-105 transition-transform">
-                        ODS 11
-                      </span>
-                      <span>Cidades Sustentáveis</span>
-                    </a>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Rodapé Integrado (Direitos reservados alinhado no canto inferior direito) */}
-              <div className="pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-                <p className="text-[11px]">
-                  Fortalecendo a cultura periférica urbana.
-                </p>
-                <p className="text-[11px] text-right font-medium">
-                  © {new Date().getFullYear()} OCUPA Plataforma Cultural. Todos os direitos reservados.
-                </p>
+            {/* Coluna 4: COMPROMISSO ODS */}
+            <div className="space-y-3">
+              <h3 className="font-display text-base tracking-wider uppercase text-slate-900 dark:text-white">
+                Compromisso ODS
+              </h3>
+              <div className="space-y-2">
+                <a
+                  href="https://brasil.un.org/pt-br/sdgs/8"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 hover:text-ocupa dark:hover:text-ocupa transition-colors group whitespace-nowrap"
+                >
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-[#A21942] flex-shrink-0 group-hover:scale-105 transition-transform">
+                    ODS 8
+                  </span>
+                  <span>Trabalho Decente</span>
+                </a>
+                <a
+                  href="https://brasil.un.org/pt-br/sdgs/10"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 hover:text-ocupa dark:hover:text-ocupa transition-colors group whitespace-nowrap"
+                >
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-[#DD1367] flex-shrink-0 group-hover:scale-105 transition-transform">
+                    ODS 10
+                  </span>
+                  <span>Redução de Desigualdades</span>
+                </a>
+                <a
+                  href="https://brasil.un.org/pt-br/sdgs/11"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 hover:text-ocupa dark:hover:text-ocupa transition-colors group whitespace-nowrap"
+                >
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-[#FD9D24] flex-shrink-0 group-hover:scale-105 transition-transform">
+                    ODS 11
+                  </span>
+                  <span>Cidades Sustentáveis</span>
+                </a>
               </div>
             </div>
 
