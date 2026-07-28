@@ -379,8 +379,9 @@ export default function App() {
       </div>
 
       {/* ═══════ FOOTER: PAREDE GRAFITADA SANGRAMENTO SEM BORDA ═══════ */}
-      <footer className="border-t border-slate-900 dark:border-slate-700 relative overflow-hidden bg-white dark:bg-slate-950 mt-16 min-h-[180px] sm:min-h-[220px]">
-        <div className="absolute left-0 top-0 bottom-0 w-full md:w-2/5 h-full overflow-hidden grain-overlay pointer-events-none">
+      <footer className="border-t border-slate-200 dark:border-slate-800 relative overflow-hidden bg-white dark:bg-slate-950 mt-16 pt-10 pb-6">
+        {/* Parede grafitada de fundo no lado esquerdo */}
+        <div className="absolute left-0 top-0 bottom-0 w-full md:w-2/5 h-full overflow-hidden grain-overlay pointer-events-none opacity-40 md:opacity-80">
           <img
             src="/footer.jpeg"
             alt="Parede grafitada"
@@ -389,9 +390,116 @@ export default function App() {
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white dark:to-slate-950" />
         </div>
 
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 relative z-10 min-h-[180px] sm:min-h-[220px] flex flex-col justify-end items-end pb-6 pt-12">
-          <div className="text-right font-body text-xs text-slate-700 dark:text-slate-300 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm px-3 py-1.5 rounded-sm border border-slate-200 dark:border-slate-800">
-            © {new Date().getFullYear()} Ocupa Plataforma Cultural. Todos os direitos reservados.
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+            
+            {/* Espaçador para a arte do lado esquerdo em telas md+ */}
+            <div className="hidden md:block md:col-span-4 lg:col-span-5" />
+
+            {/* Conteúdo à Direita */}
+            <div className="md:col-span-8 lg:col-span-7 space-y-8">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                
+                {/* Coluna 1: Logo & Slogan */}
+                <div className="space-y-3">
+                  <img
+                    src="/logo_ocupa.svg"
+                    alt="OCUPA"
+                    className="h-10 w-auto object-contain block dark:hidden"
+                  />
+                  <img
+                    src="/logo_ocupa_branco.svg"
+                    alt="OCUPA"
+                    className="h-10 w-auto object-contain hidden dark:block"
+                  />
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-body">
+                    Plataforma de Gestão de Ecossistemas Culturais Periféricos.
+                  </p>
+                  <p className="text-[11px] font-display uppercase tracking-widest text-ocupa">
+                    O território fala, o OCUPA conecta.
+                  </p>
+                </div>
+
+                {/* Coluna 2: Navegação Rápida */}
+                <div className="space-y-3">
+                  <h3 className="font-display text-base tracking-wider uppercase text-slate-900 dark:text-white">
+                    Navegação
+                  </h3>
+                  <ul className="space-y-1.5 text-xs">
+                    {[
+                      { label: "Home", target: "home" },
+                      { label: "Artistas", target: "artistas" },
+                      { label: "Espaços", target: "espacos" },
+                      { label: "Agenda Cultural", target: "eventos" },
+                      { label: "Oportunidades", target: "oportunidades" },
+                    ].map((link) => (
+                      <li key={link.target}>
+                        <button
+                          onClick={() => setRoute(link.target)}
+                          className="text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors"
+                        >
+                          {link.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Coluna 3: ODS ONU */}
+                <div className="space-y-3">
+                  <h3 className="font-display text-base tracking-wider uppercase text-slate-900 dark:text-white">
+                    Compromisso ODS
+                  </h3>
+                  <div className="space-y-2">
+                    <a
+                      href="https://brasil.un.org/pt-br/sdgs/8"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 hover:text-ocupa dark:hover:text-ocupa transition-colors group"
+                    >
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-[#A21942] group-hover:scale-105 transition-transform">
+                        ODS 8
+                      </span>
+                      <span>Trabalho Decente</span>
+                    </a>
+                    <a
+                      href="https://brasil.un.org/pt-br/sdgs/10"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 hover:text-ocupa dark:hover:text-ocupa transition-colors group"
+                    >
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-[#DD1367] group-hover:scale-105 transition-transform">
+                        ODS 10
+                      </span>
+                      <span>Redução de Desigualdades</span>
+                    </a>
+                    <a
+                      href="https://brasil.un.org/pt-br/sdgs/11"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 hover:text-ocupa dark:hover:text-ocupa transition-colors group"
+                    >
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-[#FD9D24] group-hover:scale-105 transition-transform">
+                        ODS 11
+                      </span>
+                      <span>Cidades Sustentáveis</span>
+                    </a>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Rodapé Integrado (Direitos reservados alinhado no canto inferior direito) */}
+              <div className="pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-[11px]">
+                  Fortalecendo a cultura periférica urbana.
+                </p>
+                <p className="text-[11px] text-right font-medium">
+                  © {new Date().getFullYear()} OCUPA Plataforma Cultural. Todos os direitos reservados.
+                </p>
+              </div>
+            </div>
+
           </div>
         </div>
       </footer>
