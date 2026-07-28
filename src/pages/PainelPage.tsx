@@ -225,8 +225,8 @@ export default function PainelPage({ user }: PainelPageProps) {
   const budgetRequests = requests.length;
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <div className="mx-auto max-w-7xl space-y-8">
+    <div className="min-h-screen bg-slate-50 py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Painel de Controle</h1>
           <p className="text-slate-600 dark:text-slate-400">
