@@ -119,17 +119,17 @@ export default function OportunidadesPage({ user }: OportunidadesPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="min-h-screen bg-white py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-6">
           <div>
             <h1 className="font-display text-4xl sm:text-5xl uppercase tracking-wider leading-tight text-slate-900 dark:text-white">
-              Editais & Vagas
+              Acompanhe as Oportunidades
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed">
-              Explore bolsas de residência artística, chamadas abertas e editais de incentivo cultural.
+              Explore editais de fomento, residências artísticas, bolsas, vagas de emprego e chamadas públicas.
             </p>
           </div>
           {user && (

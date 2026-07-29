@@ -321,7 +321,9 @@ export default function App() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setRoute("painel")}
-                    className="font-display text-base sm:text-lg tracking-widest uppercase text-slate-900 dark:text-white hover:text-ocupa transition-colors"
+                    className={`font-display text-base sm:text-lg tracking-widest uppercase transition-colors cursor-pointer ${
+                      route === "painel" ? "text-ocupa font-bold" : "text-slate-900 dark:text-white hover:text-ocupa"
+                    }`}
                   >
                     Painel
                   </button>
@@ -331,7 +333,7 @@ export default function App() {
                       setUser(null);
                       setRoute("home");
                     }}
-                    className="font-display text-base sm:text-lg tracking-widest uppercase text-slate-500 hover:text-ocupa transition-colors"
+                    className="font-display text-base sm:text-lg tracking-widest uppercase text-slate-500 hover:text-ocupa transition-colors cursor-pointer"
                   >
                     Sair
                   </button>
@@ -340,13 +342,17 @@ export default function App() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setRoute("login")}
-                    className="font-display text-base sm:text-lg tracking-widest uppercase text-slate-900 dark:text-white hover:text-ocupa transition-colors"
+                    className={`font-display text-base sm:text-lg tracking-widest uppercase transition-colors cursor-pointer ${
+                      route === "login" ? "text-ocupa font-bold" : "text-slate-900 dark:text-white hover:text-ocupa"
+                    }`}
                   >
                     Entrar
                   </button>
                   <button
                     onClick={() => setRoute("register")}
-                    className="font-display text-base sm:text-lg tracking-widest uppercase text-slate-900 dark:text-white hover:text-ocupa transition-colors"
+                    className={`font-display text-base sm:text-lg tracking-widest uppercase transition-colors cursor-pointer ${
+                      route === "register" ? "text-ocupa font-bold" : "text-slate-900 dark:text-white hover:text-ocupa"
+                    }`}
                   >
                     Cadastrar
                   </button>
