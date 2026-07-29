@@ -11,6 +11,14 @@ export default function EspacosPage({ user }: EspacosPageProps) {
   const [espacos, setEspacos] = useState<any[]>([]);
   const [selectedEspaco, setSelectedEspaco] = useState<any | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [isSelectingLocation, setIsSelectingLocationState] = useState(false);
+  const isSelectingLocationRef = useRef(false);
+
+  function setIsSelectingLocation(val: boolean) {
+    setIsSelectingLocationState(val);
+    isSelectingLocationRef.current = val;
+  }
+
   const [isEditing, setIsEditing] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
@@ -29,6 +37,7 @@ export default function EspacosPage({ user }: EspacosPageProps) {
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const tileRef = useRef<any>(null);
+  const tempMarkerRef = useRef<any>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Form states
@@ -105,13 +114,49 @@ export default function EspacosPage({ user }: EspacosPageProps) {
     tileRef.current = tile;
 
     m.on("click", (ev: any) => {
-      setLatitude(ev.latlng.lat.toFixed(6));
-      setLongitude(ev.latlng.lng.toFixed(6));
+      // ONLY place pin and open modal IF location selection mode is active!
+      if (!isSelectingLocationRef.current) return;
+
+      const lat = ev.latlng.lat.toFixed(6);
+      const lng = ev.latlng.lng.toFixed(6);
+      setLatitude(lat);
+      setLongitude(lng);
+
+      // Add temporary marker for location selection
+      if (tempMarkerRef.current) {
+        tempMarkerRef.current.remove();
+        tempMarkerRef.current = null;
+      }
+
+      const tempIcon = L.divIcon({
+        className: "ocupa-pin",
+        html: `<div class="ocupa-pin-circle ocupa-pin-temp"><svg viewBox="0 0 24 24" fill="none" stroke="#1b1cbb" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></div>`,
+        iconSize: [48, 48],
+        iconAnchor: [24, 24],
+      });
+
+      tempMarkerRef.current = L.marker(ev.latlng, { icon: tempIcon }).addTo(m);
+
+      setIsSelectingLocation(false);
+      setShowForm(true);
     });
 
     mapRef.current = m;
     return () => { m.remove(); };
   }, []);
+
+  /* ═══════ MAP CURSOR FOR LOCATION SELECTION ═══════ */
+  useEffect(() => {
+    if (!mapRef.current) return;
+    try {
+      const container = mapRef.current.getContainer();
+      if (container) {
+        container.style.cursor = isSelectingLocation ? "crosshair" : "";
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [isSelectingLocation]);
 
   /* ═══════ TILE SWITCH ═══════ */
   useEffect(() => {
@@ -204,7 +249,11 @@ export default function EspacosPage({ user }: EspacosPageProps) {
     setCobertura(false); setIluminacao(false); setEnergia(false); setBanheiro(false);
     setPermiteGrafite(false); setPermiteBatalha(false); setPermiteDanca(false);
     setMediaList([]); setMediaUrlInput(""); setMediaCaptionInput("");
-    setIsEditing(false); setSelectedId(null); setShowForm(false); setError(null);
+    setIsEditing(false); setSelectedId(null); setShowForm(false); setIsSelectingLocation(false); setError(null);
+    if (tempMarkerRef.current) {
+      tempMarkerRef.current.remove();
+      tempMarkerRef.current = null;
+    }
   }
 
   function fillForm(espaco: any) {
@@ -217,6 +266,12 @@ export default function EspacosPage({ user }: EspacosPageProps) {
     setPermiteDanca(espaco.permiteDanca || false);
     setMediaList(espaco.mediaItems?.map((m: any) => ({ url: m.url, caption: m.caption || "" })) || []);
     setIsEditing(true); setSelectedId(espaco.id); setShowForm(true);
+  }
+
+  function handleStartMapping() {
+    setIsSelectingLocation(true);
+    setSelectedEspaco(null);
+    setError(null);
   }
 
   function handleAddMedia() {
@@ -279,6 +334,7 @@ export default function EspacosPage({ user }: EspacosPageProps) {
           display: flex; align-items: center; justify-content: center; color: #e76e3c;
         }
         .ocupa-pin-default svg { width: 24px; height: 24px; }
+        .ocupa-pin-temp { border-color: #1b1cbb; background: #e0e7ff; }
 
         /* Tooltip */
         .ocupa-tip-wrap {
@@ -289,7 +345,7 @@ export default function EspacosPage({ user }: EspacosPageProps) {
         .leaflet-tooltip.ocupa-tip-wrap { pointer-events: none; }
         .ocupa-tip {
           background: #fff; border-radius: 4px; overflow: hidden;
-          box-shadow: 0 4px 24px rgba(0,0,0,0.22); width: 230px;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.22); width: 250px;
           border: 1px solid #0f172a;
         }
         .ocupa-tip img { width: 100%; height: 110px; object-fit: cover; display: block; }
@@ -297,8 +353,10 @@ export default function EspacosPage({ user }: EspacosPageProps) {
           padding: 8px 10px; display: flex; flex-direction: column; gap: 2px;
         }
         .ocupa-tip-body strong {
-          font-family: 'Bebas Neue', sans-serif; font-size: 15px;
-          letter-spacing: 0.06em; text-transform: uppercase; color: #0f172a;
+          font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+          letter-spacing: 0.04em; text-transform: uppercase; color: #0f172a;
+          white-space: normal !important; word-break: break-word !important;
+          overflow-wrap: break-word !important; line-height: 1.2;
         }
         .ocupa-tip-body span { font-size: 11px; color: #64748b; line-height: 1.3; }
         .ocupa-tip-body em {
@@ -316,98 +374,127 @@ export default function EspacosPage({ user }: EspacosPageProps) {
         .panel-slide { animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
-        /* Custom scrollbar for gallery */
-        .gallery-scroll::-webkit-scrollbar { height: 4px; }
-        .gallery-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 2px; }
-        .gallery-scroll::-webkit-scrollbar-track { background: transparent; }
+        /* Custom scrollbar for gallery - Subtle gray */
+        .gallery-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #94a3b8 transparent;
+        }
+        .gallery-scroll::-webkit-scrollbar { height: 6px; }
+        .gallery-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.06); border-radius: 4px; }
+        .gallery-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .gallery-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .dark .gallery-scroll::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.06); }
+        .dark .gallery-scroll::-webkit-scrollbar-thumb { background: #475569; }
+        .dark .gallery-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
       `}</style>
 
-      <div className="relative bg-white dark:bg-slate-950" style={{ height: "calc(100vh - 65px)" }}>
-        {/* ═══════ FILTER BAR (floating on map) ═══════ */}
-        <div className="absolute top-0 left-0 right-0 z-[1000] p-3" style={selectedEspaco ? { right: "420px" } : {}}>
-          <div className="mx-auto max-w-5xl">
-            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-900 dark:border-slate-600 rounded-sm p-3 space-y-2 shadow-lg">
-              <div className="flex items-center gap-3">
-                {/* Search */}
-                <div className="relative flex-1">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Buscar espaço por nome..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-transparent border border-slate-300 dark:border-slate-700 rounded-sm focus:border-[#e76e3c] focus:ring-1 focus:ring-[#e76e3c] text-slate-900 dark:text-white placeholder-slate-400 outline-none"
-                  />
+      <div className="relative bg-white dark:bg-slate-950 overflow-hidden flex" style={{ height: "calc(100vh - 65px)" }}>
+        {/* ═══════ MAP AREA ═══════ */}
+        <div className="flex-1 relative min-w-0 h-full">
+          <div id="espacos-map" className="w-full h-full" />
+
+          {/* ═══════ FILTER BAR (floating on map) ═══════ */}
+          <div
+            className="absolute top-0 left-0 right-0 z-[1000] p-3 pointer-events-none"
+            style={selectedEspaco ? { right: "420px" } : {}}
+          >
+            <div className="mx-auto max-w-5xl space-y-2">
+              <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-900 dark:border-slate-600 rounded-sm p-3 space-y-2 shadow-lg pointer-events-auto">
+                <div className="flex items-center gap-3">
+                  {/* Search */}
+                  <div className="relative flex-1">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Buscar espaço por nome..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-transparent border border-slate-300 dark:border-slate-700 rounded-sm focus:border-[#e76e3c] focus:ring-1 focus:ring-[#e76e3c] text-slate-900 dark:text-white placeholder-slate-400 outline-none"
+                    />
+                  </div>
+
+                  {user && (
+                    <button
+                      onClick={handleStartMapping}
+                      className="bg-[#e76e3c] hover:bg-[#d65d2b] text-white font-display text-sm tracking-wider uppercase rounded-sm px-4 py-2 transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      + Mapear Espaço
+                    </button>
+                  )}
                 </div>
 
-                {user && (
-                  <button
-                    onClick={() => setShowForm(true)}
-                    className="bg-[#e76e3c] hover:bg-[#d65d2b] text-white font-display text-sm tracking-wider uppercase rounded-sm px-4 py-2 transition-colors cursor-pointer whitespace-nowrap"
-                  >
-                    + Mapear Espaço
-                  </button>
-                )}
+                {/* Filter chips */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="font-display text-[10px] tracking-wider uppercase text-slate-500 dark:text-slate-400 mr-1">Atividades:</span>
+                  {[
+                    { label: "Grafite", active: filterGrafite, toggle: () => setFilterGrafite(!filterGrafite) },
+                    { label: "Batalha de Rima", active: filterBatalha, toggle: () => setFilterBatalha(!filterBatalha) },
+                    { label: "Dança", active: filterDanca, toggle: () => setFilterDanca(!filterDanca) },
+                  ].map((f) => (
+                    <button
+                      key={f.label}
+                      onClick={f.toggle}
+                      className={`font-display text-[11px] tracking-wider uppercase px-2.5 py-1 rounded-sm border transition-all cursor-pointer ${
+                        f.active
+                          ? "bg-[#e76e3c] text-white border-[#e76e3c]"
+                          : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-[#e76e3c]"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+
+                  <span className="font-display text-[10px] tracking-wider uppercase text-slate-500 dark:text-slate-400 ml-2 mr-1">Estrutura:</span>
+                  {[
+                    { label: "Cobertura", active: filterCobertura, toggle: () => setFilterCobertura(!filterCobertura) },
+                    { label: "Iluminação", active: filterIluminacao, toggle: () => setFilterIluminacao(!filterIluminacao) },
+                    { label: "Energia", active: filterEnergia, toggle: () => setFilterEnergia(!filterEnergia) },
+                    { label: "Banheiro", active: filterBanheiro, toggle: () => setFilterBanheiro(!filterBanheiro) },
+                  ].map((f) => (
+                    <button
+                      key={f.label}
+                      onClick={f.toggle}
+                      className={`font-display text-[11px] tracking-wider uppercase px-2.5 py-1 rounded-sm border transition-all cursor-pointer ${
+                        f.active
+                          ? "bg-[#1b1cbb] text-white border-[#1b1cbb]"
+                          : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-[#1b1cbb]"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* Filter chips */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="font-display text-[10px] tracking-wider uppercase text-slate-500 dark:text-slate-400 mr-1">Atividades:</span>
-                {[
-                  { label: "Grafite", active: filterGrafite, toggle: () => setFilterGrafite(!filterGrafite) },
-                  { label: "Batalha de Rima", active: filterBatalha, toggle: () => setFilterBatalha(!filterBatalha) },
-                  { label: "Dança", active: filterDanca, toggle: () => setFilterDanca(!filterDanca) },
-                ].map((f) => (
+              {/* SELECIONE A LOCALIZAÇÃO BANNER */}
+              {isSelectingLocation && (
+                <div className="bg-[#e76e3c] text-white border border-slate-900 dark:border-slate-600 rounded-sm p-3 flex items-center justify-between shadow-xl pointer-events-auto">
+                  <div className="flex items-center gap-2 font-display text-sm sm:text-base uppercase tracking-wider">
+                    <svg className="w-5 h-5 animate-bounce flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>SELECIONE A LOCALIZAÇÃO — Clique no ponto do mapa onde fica o espaço</span>
+                  </div>
                   <button
-                    key={f.label}
-                    onClick={f.toggle}
-                    className={`font-display text-[11px] tracking-wider uppercase px-2.5 py-1 rounded-sm border transition-all cursor-pointer ${
-                      f.active
-                        ? "bg-[#e76e3c] text-white border-[#e76e3c]"
-                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-[#e76e3c]"
-                    }`}
+                    onClick={() => setIsSelectingLocation(false)}
+                    className="font-body text-xs underline uppercase tracking-wider hover:text-slate-200 cursor-pointer ml-3 whitespace-nowrap"
                   >
-                    {f.label}
+                    Cancelar
                   </button>
-                ))}
-
-                <span className="font-display text-[10px] tracking-wider uppercase text-slate-500 dark:text-slate-400 ml-2 mr-1">Estrutura:</span>
-                {[
-                  { label: "Cobertura", active: filterCobertura, toggle: () => setFilterCobertura(!filterCobertura) },
-                  { label: "Iluminação", active: filterIluminacao, toggle: () => setFilterIluminacao(!filterIluminacao) },
-                  { label: "Energia", active: filterEnergia, toggle: () => setFilterEnergia(!filterEnergia) },
-                  { label: "Banheiro", active: filterBanheiro, toggle: () => setFilterBanheiro(!filterBanheiro) },
-                ].map((f) => (
-                  <button
-                    key={f.label}
-                    onClick={f.toggle}
-                    className={`font-display text-[11px] tracking-wider uppercase px-2.5 py-1 rounded-sm border transition-all cursor-pointer ${
-                      f.active
-                        ? "bg-[#1b1cbb] text-white border-[#1b1cbb]"
-                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-[#1b1cbb]"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
           </div>
-        </div>
 
-        {/* ═══════ MAIN: MAP + DETAIL PANEL ═══════ */}
-        <div className="h-full flex">
-          {/* MAP */}
-          <div className="flex-1 relative min-w-0">
-            <div id="espacos-map" className="w-full h-full" />
-
-            {/* Mapa / Satélite toggle */}
-            <div className="absolute bottom-6 left-4 z-[1000] flex rounded-sm overflow-hidden border border-slate-900 dark:border-slate-600 shadow-lg">
+          {/* Mapa / Satélite toggle + Counter badge */}
+          <div className="absolute bottom-6 left-4 z-[1000] flex items-stretch gap-3">
+            <div className="flex rounded-sm overflow-hidden border border-slate-900 dark:border-slate-600 shadow-lg">
               <button
                 onClick={() => setMapMode("mapa")}
-                className={`font-display text-xs tracking-wider uppercase px-3 py-1.5 transition-colors cursor-pointer ${
+                className={`font-display text-xs tracking-wider uppercase px-3 py-1.5 transition-colors cursor-pointer flex items-center justify-center ${
                   mapMode === "mapa"
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
                     : "bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
@@ -417,7 +504,7 @@ export default function EspacosPage({ user }: EspacosPageProps) {
               </button>
               <button
                 onClick={() => setMapMode("satelite")}
-                className={`font-display text-xs tracking-wider uppercase px-3 py-1.5 transition-colors cursor-pointer ${
+                className={`font-display text-xs tracking-wider uppercase px-3 py-1.5 transition-colors cursor-pointer flex items-center justify-center ${
                   mapMode === "satelite"
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
                     : "bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
@@ -427,144 +514,141 @@ export default function EspacosPage({ user }: EspacosPageProps) {
               </button>
             </div>
 
-            {/* Counter badge */}
-            <div className="absolute bottom-6 right-4 z-[1000]" style={selectedEspaco ? { display: "none" } : {}}>
-              <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-slate-900 dark:border-slate-600 rounded-sm px-3 py-1.5 shadow-lg">
-                <span className="font-display text-xs tracking-wider uppercase text-slate-900 dark:text-white">
-                  {filteredEspacos.length} espaço{filteredEspacos.length !== 1 ? "s" : ""} mapeado{filteredEspacos.length !== 1 ? "s" : ""}
-                </span>
-              </div>
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-slate-900 dark:border-slate-600 rounded-sm px-3 py-1.5 shadow-lg flex items-center justify-center">
+              <span className="font-display text-xs tracking-wider uppercase text-slate-900 dark:text-white leading-none">
+                {filteredEspacos.length} espaço{filteredEspacos.length !== 1 ? "s" : ""} mapeado{filteredEspacos.length !== 1 ? "s" : ""}
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* ═══════ DETAIL PANEL (right side) ═══════ */}
-          {selectedEspaco && (
-            <div
-              ref={panelRef}
-              className="panel-slide w-full sm:w-[420px] h-full overflow-y-auto bg-white dark:bg-slate-900 border-l border-slate-900 dark:border-slate-600 flex-shrink-0 relative"
+        {/* ═══════ DETAIL PANEL (right side) ═══════ */}
+        {selectedEspaco && (
+          <div
+            ref={panelRef}
+            className="panel-slide w-full sm:w-[420px] h-full overflow-y-auto bg-white dark:bg-slate-900 border-l border-slate-900 dark:border-slate-600 flex-shrink-0 relative z-[1001]"
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedEspaco(null)}
+              className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center bg-white/90 dark:bg-slate-800/90 rounded-full border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:text-[#e76e3c] hover:border-[#e76e3c] cursor-pointer transition-colors text-lg font-bold"
+              title="Fechar"
             >
-              {/* Close button */}
-              <button
-                onClick={() => setSelectedEspaco(null)}
-                className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center bg-white/90 dark:bg-slate-800/90 rounded-full border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:text-[#e76e3c] hover:border-[#e76e3c] cursor-pointer transition-colors text-lg font-bold"
-                title="Fechar"
-              >
-                ×
-              </button>
+              ×
+            </button>
 
-              {/* Cover photo */}
-              {selectedEspaco.mediaItems?.[0]?.url ? (
-                <div className="relative h-[280px] w-full overflow-hidden">
-                  <img
-                    src={selectedEspaco.mediaItems[0].url}
-                    alt={selectedEspaco.nome}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent" />
-                </div>
-              ) : (
-                <div className="h-[180px] w-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                  <svg className="w-16 h-16 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            {/* Cover photo */}
+            {selectedEspaco.mediaItems?.[0]?.url ? (
+              <div className="relative h-[280px] w-full overflow-hidden">
+                <img
+                  src={selectedEspaco.mediaItems[0].url}
+                  alt={selectedEspaco.nome}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent" />
+              </div>
+            ) : (
+              <div className="h-[180px] w-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                <svg className="w-16 h-16 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+            )}
+
+            {/* Info content */}
+            <div className="p-5 space-y-4">
+              <div>
+                <h2 className="font-display text-2xl uppercase tracking-wider text-slate-900 dark:text-white leading-tight">
+                  {selectedEspaco.nome}
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                </div>
-              )}
-
-              {/* Info content */}
-              <div className="p-5 space-y-4">
-                <div>
-                  <h2 className="font-display text-2xl uppercase tracking-wider text-slate-900 dark:text-white leading-tight">
-                    {selectedEspaco.nome}
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    {selectedEspaco.endereco || "Endereço não cadastrado"}
-                  </p>
-                </div>
-
-                {/* Capacity badge */}
-                <div className="flex items-center gap-2">
-                  <span className="font-display text-xs px-2.5 py-0.5 bg-[#e76e3c] text-white uppercase tracking-wider rounded">
-                    Capacidade: {selectedEspaco.capacidade || 0} Pessoas
-                  </span>
-                </div>
-
-                {/* Description */}
-                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-justify">
-                  {selectedEspaco.descricao || "Sem descrição cadastrada."}
+                  {selectedEspaco.endereco || "Endereço não cadastrado"}
                 </p>
-
-                {/* Infrastructure tags */}
-                <div className="space-y-2">
-                  <h4 className="font-display text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Infraestrutura</h4>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedEspaco.cobertura && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Coberto</span>}
-                    {selectedEspaco.iluminacao && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Iluminado</span>}
-                    {selectedEspaco.energia && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Energia</span>}
-                    {selectedEspaco.banheiro && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Banheiro</span>}
-                    {!selectedEspaco.cobertura && !selectedEspaco.iluminacao && !selectedEspaco.energia && !selectedEspaco.banheiro && (
-                      <span className="text-xs text-slate-400 italic">Nenhuma informação</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Activities tags */}
-                <div className="space-y-2">
-                  <h4 className="font-display text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Atividades Permitidas</h4>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedEspaco.permiteGrafite && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Grafite / Mural</span>}
-                    {selectedEspaco.permiteBatalha && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Batalha de Rima</span>}
-                    {selectedEspaco.permiteDanca && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Dança / B-Boy</span>}
-                    {!selectedEspaco.permiteGrafite && !selectedEspaco.permiteBatalha && !selectedEspaco.permiteDanca && (
-                      <span className="text-xs text-slate-400 italic">Nenhuma informação</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Admin actions */}
-                {user && (user.role === "ADMIN" || user.email === selectedEspaco.criadoPorEmail) && (
-                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex gap-2">
-                    <button
-                      onClick={() => { fillForm(selectedEspaco); setSelectedEspaco(null); }}
-                      className="bg-[#1b1cbb] hover:bg-[#15169a] text-white font-display text-xs tracking-wider uppercase rounded-sm px-3 py-1.5 transition-colors cursor-pointer"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => { handleDelete(selectedEspaco.id); setSelectedEspaco(null); }}
-                      className="bg-red-600 hover:bg-red-700 text-white font-display text-xs tracking-wider uppercase rounded-sm px-3 py-1.5 transition-colors cursor-pointer"
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                )}
               </div>
 
-              {/* Horizontal photo gallery */}
-              {selectedEspaco.mediaItems && selectedEspaco.mediaItems.length > 1 && (
-                <div className="border-t border-slate-200 dark:border-slate-800 p-4">
-                  <h4 className="font-display text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
-                    Galeria de Fotos
-                  </h4>
-                  <div className="flex gap-3 overflow-x-auto pb-2 gallery-scroll">
-                    {selectedEspaco.mediaItems.slice(1).map((media: any, idx: number) => (
-                      <div
-                        key={media.id || idx}
-                        className="flex-shrink-0 w-[150px] h-[110px] rounded-sm overflow-hidden border border-slate-900 dark:border-slate-700 hover:border-[#e76e3c] transition-colors"
-                      >
-                        <img src={media.url} alt={media.caption || ""} className="w-full h-full object-cover" />
-                      </div>
-                    ))}
-                  </div>
+              {/* Capacity badge */}
+              <div className="flex items-center gap-2">
+                <span className="font-display text-xs px-2.5 py-0.5 bg-[#e76e3c] text-white uppercase tracking-wider rounded">
+                  Capacidade: {selectedEspaco.capacidade || 0} Pessoas
+                </span>
+              </div>
+
+              {/* Description */}
+              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-justify">
+                {selectedEspaco.descricao || "Sem descrição cadastrada."}
+              </p>
+
+              {/* Infrastructure tags */}
+              <div className="space-y-2">
+                <h4 className="font-display text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Infraestrutura</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedEspaco.cobertura && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Coberto</span>}
+                  {selectedEspaco.iluminacao && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Iluminado</span>}
+                  {selectedEspaco.energia && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Energia</span>}
+                  {selectedEspaco.banheiro && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Banheiro</span>}
+                  {!selectedEspaco.cobertura && !selectedEspaco.iluminacao && !selectedEspaco.energia && !selectedEspaco.banheiro && (
+                    <span className="text-xs text-slate-400 italic">Nenhuma informação</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Activities tags */}
+              <div className="space-y-2">
+                <h4 className="font-display text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Atividades Permitidas</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedEspaco.permiteGrafite && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Grafite / Mural</span>}
+                  {selectedEspaco.permiteBatalha && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Batalha de Rima</span>}
+                  {selectedEspaco.permiteDanca && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Dança / B-Boy</span>}
+                  {!selectedEspaco.permiteGrafite && !selectedEspaco.permiteBatalha && !selectedEspaco.permiteDanca && (
+                    <span className="text-xs text-slate-400 italic">Nenhuma informação</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Admin actions */}
+              {user && (user.role === "ADMIN" || user.email === selectedEspaco.criadoPorEmail) && (
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex gap-2">
+                  <button
+                    onClick={() => { fillForm(selectedEspaco); setSelectedEspaco(null); }}
+                    className="bg-[#1b1cbb] hover:bg-[#15169a] text-white font-display text-xs tracking-wider uppercase rounded-sm px-3 py-1.5 transition-colors cursor-pointer"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => { handleDelete(selectedEspaco.id); setSelectedEspaco(null); }}
+                    className="bg-red-600 hover:bg-red-700 text-white font-display text-xs tracking-wider uppercase rounded-sm px-3 py-1.5 transition-colors cursor-pointer"
+                  >
+                    Excluir
+                  </button>
                 </div>
               )}
             </div>
-          )}
-        </div>
+
+            {/* Horizontal photo gallery with subtle gray custom scrollbar */}
+            {selectedEspaco.mediaItems && selectedEspaco.mediaItems.length > 1 && (
+              <div className="border-t border-slate-200 dark:border-slate-800 p-4">
+                <h4 className="font-display text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                  Galeria de Fotos
+                </h4>
+                <div className="flex gap-3 overflow-x-auto pb-3 gallery-scroll">
+                  {selectedEspaco.mediaItems.slice(1).map((media: any, idx: number) => (
+                    <div
+                      key={media.id || idx}
+                      className="flex-shrink-0 w-[150px] h-[110px] rounded-sm overflow-hidden border border-slate-900 dark:border-slate-700 hover:border-[#e76e3c] transition-colors"
+                    >
+                      <img src={media.url} alt={media.caption || ""} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ═══════ FORM MODAL OVERLAY ═══════ */}
         {showForm && (
@@ -606,15 +690,15 @@ export default function EspacosPage({ user }: EspacosPageProps) {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="latitude">Latitude</Label>
-                      <TextInput id="latitude" value={latitude} onChange={(e) => setLatitude(e.target.value)} required />
+                      <Label htmlFor="latitude">Latitude (Travada no Mapa)</Label>
+                      <TextInput id="latitude" value={latitude} readOnly disabled className="bg-slate-100 dark:bg-slate-800 cursor-not-allowed opacity-75 font-mono text-xs" />
                     </div>
                     <div>
-                      <Label htmlFor="longitude">Longitude</Label>
-                      <TextInput id="longitude" value={longitude} onChange={(e) => setLongitude(e.target.value)} required />
+                      <Label htmlFor="longitude">Longitude (Travada no Mapa)</Label>
+                      <TextInput id="longitude" value={longitude} readOnly disabled className="bg-slate-100 dark:bg-slate-800 cursor-not-allowed opacity-75 font-mono text-xs" />
                     </div>
                   </div>
-                  <p className="text-xs text-slate-500 italic">Dica: Feche este formulário e clique no mapa para preencher as coordenadas automaticamente.</p>
+                  <p className="text-xs text-slate-500 italic">Localização selecionada via clique direto no mapa.</p>
                 </div>
 
                 <div className="space-y-6">
