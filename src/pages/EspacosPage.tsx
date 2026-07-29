@@ -1,5 +1,5 @@
 import { Alert, Label, TextInput, ToggleSwitch } from "flowbite-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -9,9 +9,27 @@ interface EspacosPageProps {
 
 export default function EspacosPage({ user }: EspacosPageProps) {
   const [espacos, setEspacos] = useState<any[]>([]);
+  const [selectedEspaco, setSelectedEspaco] = useState<any | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterGrafite, setFilterGrafite] = useState(false);
+  const [filterBatalha, setFilterBatalha] = useState(false);
+  const [filterDanca, setFilterDanca] = useState(false);
+  const [filterCobertura, setFilterCobertura] = useState(false);
+  const [filterIluminacao, setFilterIluminacao] = useState(false);
+  const [filterEnergia, setFilterEnergia] = useState(false);
+  const [filterBanheiro, setFilterBanheiro] = useState(false);
+
+  // Map states
+  const [mapMode, setMapMode] = useState<"mapa" | "satelite">("mapa");
+  const mapRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
+  const tileRef = useRef<any>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Form states
   const [nome, setNome] = useState("");
@@ -20,8 +38,6 @@ export default function EspacosPage({ user }: EspacosPageProps) {
   const [capacidade, setCapacidade] = useState<number>(0);
   const [latitude, setLatitude] = useState("-23.55052");
   const [longitude, setLongitude] = useState("-46.633308");
-
-  // Infrastructure toggles
   const [cobertura, setCobertura] = useState(false);
   const [iluminacao, setIluminacao] = useState(false);
   const [energia, setEnergia] = useState(false);
@@ -29,197 +45,204 @@ export default function EspacosPage({ user }: EspacosPageProps) {
   const [permiteGrafite, setPermiteGrafite] = useState(false);
   const [permiteBatalha, setPermiteBatalha] = useState(false);
   const [permiteDanca, setPermiteDanca] = useState(false);
-
-  // Media gallery states
   const [mediaList, setMediaList] = useState<{ url: string; caption: string }[]>([]);
   const [mediaUrlInput, setMediaUrlInput] = useState("");
   const [mediaCaptionInput, setMediaCaptionInput] = useState("");
-
-  const [map, setMap] = useState<any>(null);
-  const [markers, setMarkers] = useState<any[]>([]);
-  const [tempMarker, setTempMarker] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchEspacos();
-  }, []);
-
-  // Initialize Leaflet Map once
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const L = (window as any).L;
-    if (!L) return;
-    const mapContainer = document.getElementById("map");
-    if (!mapContainer) return;
-
-    if ((mapContainer as any)._leaflet_id) {
-      (mapContainer as any)._leaflet_id = null;
-    }
-
-    const initialMap = L.map("map").setView([-23.55052, -46.633308], 11);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(initialMap);
-
-    initialMap.on("click", (e: any) => {
-      const lat = e.latlng.lat.toFixed(6);
-      const lng = e.latlng.lng.toFixed(6);
-      setLatitude(lat);
-      setLongitude(lng);
-
-      if (tempMarker) {
-        tempMarker.setLatLng(e.latlng);
-      } else {
-        const marker = L.marker(e.latlng).addTo(initialMap).bindPopup("Local selecionado").openPopup();
-        setTempMarker(marker);
-      }
+  /* ═══════ FILTERED SPACES ═══════ */
+  const filteredEspacos = useMemo(() => {
+    return espacos.filter((e) => {
+      if (searchQuery && !e.nome?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (filterGrafite && !e.permiteGrafite) return false;
+      if (filterBatalha && !e.permiteBatalha) return false;
+      if (filterDanca && !e.permiteDanca) return false;
+      if (filterCobertura && !e.cobertura) return false;
+      if (filterIluminacao && !e.iluminacao) return false;
+      if (filterEnergia && !e.energia) return false;
+      if (filterBanheiro && !e.banheiro) return false;
+      return true;
     });
+  }, [espacos, searchQuery, filterGrafite, filterBatalha, filterDanca, filterCobertura, filterIluminacao, filterEnergia, filterBanheiro]);
 
-    setMap(initialMap);
-
-    return () => {
-      initialMap.remove();
-    };
-  }, []);
-
-  // Render markers when spaces list updates
-  useEffect(() => {
-    if (!map) return;
-    const L = (window as any).L;
-    if (!L) return;
-    markers.forEach((m) => m.remove());
-    const newMarkers: any[] = [];
-
-    espacos.forEach((espaco) => {
-      if (espaco.latitude && espaco.longitude) {
-        const marker = L.marker([Number(espaco.latitude), Number(espaco.longitude)])
-          .addTo(map)
-          .bindPopup(`
-            <div style="font-family: inherit;">
-              <strong style="font-size: 14px; color: #e76e3c;">${espaco.nome}</strong><br/>
-              <span style="font-size: 12px; color: #666;">${espaco.endereco || ""}</span><br/>
-              <p style="font-size: 11px; margin-top: 4px;">Capacidade: ${espaco.capacidade || "N/A"} pessoas</p>
-            </div>
-          `);
-        newMarkers.push(marker);
-      }
-    });
-
-    setMarkers(newMarkers);
-
-    if (newMarkers.length > 0) {
-      const group = L.featureGroup(newMarkers);
-      map.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 15 });
-    }
-  }, [map, espacos]);
-
+  /* ═══════ FETCH ═══════ */
   async function fetchEspacos() {
     try {
       const res = await fetch(`${API_URL}/api/espacos`);
-      if (res.ok) {
-        const data = await res.json();
-        setEspacos(data);
-      }
+      if (res.ok) setEspacos(await res.json());
     } catch (err) {
       console.error("Erro ao buscar espaços:", err);
     }
   }
 
-  function resetForm() {
-    setNome("");
-    setEndereco("");
-    setDescricao("");
-    setCapacidade(0);
-    setLatitude("-23.55052");
-    setLongitude("-46.633308");
-    setCobertura(false);
-    setIluminacao(false);
-    setEnergia(false);
-    setBanheiro(false);
-    setPermiteGrafite(false);
-    setPermiteBatalha(false);
-    setPermiteDanca(false);
-    setMediaList([]);
-    setMediaUrlInput("");
-    setMediaCaptionInput("");
-    setIsEditing(false);
-    setSelectedId(null);
-    setShowForm(false);
-    if (tempMarker) {
-      tempMarker.remove();
-      setTempMarker(null);
+  useEffect(() => { fetchEspacos(); }, []);
+
+  // Keep selectedEspaco in sync after refetch
+  useEffect(() => {
+    if (selectedEspaco) {
+      const updated = espacos.find((e) => e.id === selectedEspaco.id);
+      if (updated) setSelectedEspaco(updated);
+      else setSelectedEspaco(null);
     }
+  }, [espacos]);
+
+  /* ═══════ MAP INIT ═══════ */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const L = (window as any).L;
+    if (!L) return;
+    const container = document.getElementById("espacos-map");
+    if (!container) return;
+    if ((container as any)._leaflet_id) (container as any)._leaflet_id = null;
+
+    const m = L.map("espacos-map", { zoomControl: false }).setView([-23.55052, -46.633308], 11);
+    L.control.zoom({ position: "bottomright" }).addTo(m);
+
+    const tile = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      className: "grayscale-tiles",
+    }).addTo(m);
+    tileRef.current = tile;
+
+    m.on("click", (ev: any) => {
+      setLatitude(ev.latlng.lat.toFixed(6));
+      setLongitude(ev.latlng.lng.toFixed(6));
+    });
+
+    mapRef.current = m;
+    return () => { m.remove(); };
+  }, []);
+
+  /* ═══════ TILE SWITCH ═══════ */
+  useEffect(() => {
+    const m = mapRef.current;
+    const L = (window as any).L;
+    if (!m || !L) return;
+    if (tileRef.current) m.removeLayer(tileRef.current);
+
+    if (mapMode === "satelite") {
+      tileRef.current = L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        { attribution: "&copy; Esri" }
+      ).addTo(m);
+    } else {
+      tileRef.current = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        className: "grayscale-tiles",
+      }).addTo(m);
+    }
+  }, [mapMode]);
+
+  /* ═══════ MARKERS ═══════ */
+  useEffect(() => {
+    const m = mapRef.current;
+    const L = (window as any).L;
+    if (!m || !L) return;
+
+    markersRef.current.forEach((mk) => mk.remove());
+    const fresh: any[] = [];
+
+    filteredEspacos.forEach((espaco) => {
+      if (!espaco.latitude || !espaco.longitude) return;
+      const photo = espaco.mediaItems?.[0]?.url;
+
+      const icon = L.divIcon({
+        className: "ocupa-pin",
+        html: photo
+          ? `<div class="ocupa-pin-circle"><img src="${photo}" alt="" /></div>`
+          : `<div class="ocupa-pin-circle ocupa-pin-default"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>`,
+        iconSize: [48, 48],
+        iconAnchor: [24, 24],
+      });
+
+      const tip = `
+        <div class="ocupa-tip">
+          ${photo ? `<img src="${photo}" alt="" />` : ""}
+          <div class="ocupa-tip-body">
+            <strong>${espaco.nome}</strong>
+            <span>${espaco.endereco || ""}</span>
+            <em>${espaco.capacidade || 0} pessoas</em>
+          </div>
+        </div>`;
+
+      const marker = L.marker([Number(espaco.latitude), Number(espaco.longitude)], { icon })
+        .addTo(m)
+        .bindTooltip(tip, { direction: "top", offset: [0, -28], className: "ocupa-tip-wrap", opacity: 1 });
+
+      marker.on("click", () => {
+        setSelectedEspaco(espaco);
+        m.flyTo([Number(espaco.latitude), Number(espaco.longitude)], 15, { duration: 0.8 });
+      });
+
+      fresh.push(marker);
+    });
+
+    markersRef.current = fresh;
+    if (fresh.length > 0) {
+      const g = L.featureGroup(fresh);
+      m.fitBounds(g.getBounds(), { padding: [80, 80], maxZoom: 15 });
+    }
+  }, [filteredEspacos]);
+
+  /* ═══════ INVALIDATE MAP ON PANEL TOGGLE ═══════ */
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!m) return;
+    const t = setTimeout(() => m.invalidateSize(), 300);
+    return () => clearTimeout(t);
+  }, [selectedEspaco]);
+
+  /* ═══════ SCROLL PANEL TO TOP ═══════ */
+  useEffect(() => {
+    if (selectedEspaco && panelRef.current) panelRef.current.scrollTop = 0;
+  }, [selectedEspaco]);
+
+  /* ═══════ CRUD HELPERS ═══════ */
+  function resetForm() {
+    setNome(""); setEndereco(""); setDescricao(""); setCapacidade(0);
+    setLatitude("-23.55052"); setLongitude("-46.633308");
+    setCobertura(false); setIluminacao(false); setEnergia(false); setBanheiro(false);
+    setPermiteGrafite(false); setPermiteBatalha(false); setPermiteDanca(false);
+    setMediaList([]); setMediaUrlInput(""); setMediaCaptionInput("");
+    setIsEditing(false); setSelectedId(null); setShowForm(false); setError(null);
   }
 
   function fillForm(espaco: any) {
-    setNome(espaco.nome || "");
-    setEndereco(espaco.endereco || "");
-    setDescricao(espaco.descricao || "");
-    setCapacidade(espaco.capacidade || 0);
-    setLatitude(espaco.latitude || "-23.55052");
-    setLongitude(espaco.longitude || "-46.633308");
-    setCobertura(espaco.cobertura || false);
-    setIluminacao(espaco.iluminacao || false);
-    setEnergia(espaco.energia || false);
-    setBanheiro(espaco.banheiro || false);
-    setPermiteGrafite(espaco.permiteGrafite || false);
-    setPermiteBatalha(espaco.permiteBatalha || false);
+    setNome(espaco.nome || ""); setEndereco(espaco.endereco || "");
+    setDescricao(espaco.descricao || ""); setCapacidade(espaco.capacidade || 0);
+    setLatitude(espaco.latitude || "-23.55052"); setLongitude(espaco.longitude || "-46.633308");
+    setCobertura(espaco.cobertura || false); setIluminacao(espaco.iluminacao || false);
+    setEnergia(espaco.energia || false); setBanheiro(espaco.banheiro || false);
+    setPermiteGrafite(espaco.permiteGrafite || false); setPermiteBatalha(espaco.permiteBatalha || false);
     setPermiteDanca(espaco.permiteDanca || false);
-
-    if (espaco.mediaItems && Array.isArray(espaco.mediaItems)) {
-      setMediaList(espaco.mediaItems.map((m: any) => ({ url: m.url, caption: m.caption || "" })));
-    } else {
-      setMediaList([]);
-    }
-
-    setIsEditing(true);
-    setSelectedId(espaco.id);
-    setShowForm(true);
+    setMediaList(espaco.mediaItems?.map((m: any) => ({ url: m.url, caption: m.caption || "" })) || []);
+    setIsEditing(true); setSelectedId(espaco.id); setShowForm(true);
   }
 
   function handleAddMedia() {
     if (!mediaUrlInput) return;
     setMediaList([...mediaList, { url: mediaUrlInput, caption: mediaCaptionInput }]);
-    setMediaUrlInput("");
-    setMediaCaptionInput("");
+    setMediaUrlInput(""); setMediaCaptionInput("");
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-
+    e.preventDefault(); setError(null);
     const payload = {
-      nome,
-      endereco,
-      descricao,
-      capacidade,
-      latitude,
-      longitude,
-      cobertura,
-      iluminacao,
-      energia,
-      banheiro,
-      permiteGrafite,
-      permiteBatalha,
-      permiteDanca,
+      nome, endereco, descricao, capacidade, latitude, longitude,
+      cobertura, iluminacao, energia, banheiro,
+      permiteGrafite, permiteBatalha, permiteDanca,
       criadoPorEmail: user?.email,
       mediaItems: mediaList.map((m) => ({ mediaType: "IMAGE", url: m.url, caption: m.caption })),
     };
-
     try {
       const url = isEditing ? `${API_URL}/api/espacos/${selectedId}` : `${API_URL}/api/espacos`;
-      const method = isEditing ? "PUT" : "POST";
-
       const res = await fetch(url, {
-        method,
+        method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
       if (!res.ok) throw new Error("Erro ao salvar espaço cultural");
-
-      resetForm();
-      fetchEspacos();
+      resetForm(); fetchEspacos();
     } catch (err: any) {
       setError(err.message || "Erro ao salvar espaço");
     }
@@ -229,259 +252,447 @@ export default function EspacosPage({ user }: EspacosPageProps) {
     if (!confirm("Tem certeza que deseja remover este espaço?")) return;
     try {
       const res = await fetch(`${API_URL}/api/espacos/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        fetchEspacos();
-      }
-    } catch (err) {
-      console.error("Erro ao deletar espaço:", err);
-    }
+      if (res.ok) fetchEspacos();
+    } catch (err) { console.error("Erro ao deletar espaço:", err); }
   }
 
+  /* ═══════════════════ RENDER ═══════════════════ */
   return (
-    <div className="min-h-screen bg-white py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
-        
-        {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-6">
-          <div>
-            <h1 className="font-display text-4xl sm:text-5xl uppercase tracking-wider leading-tight text-slate-900 dark:text-white">
-              Espaços Culturais
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed">
-              Locais públicos, praças e pontos mapeados para intervenções artísticas periféricas.
-            </p>
-          </div>
-          {user && (
-            <button
-              onClick={() => { isEditing ? resetForm() : setShowForm(!showForm); }}
-              className="bg-[#e76e3c] hover:bg-[#d65d2b] text-white font-display text-lg tracking-wider uppercase rounded-sm px-4 py-2 transition-colors cursor-pointer whitespace-nowrap self-start sm:self-auto"
-            >
-              {showForm ? "Esconder Formulário" : "Mapear Novo Espaço"}
-            </button>
-          )}
-        </div>
+    <>
+      {/* ── CUSTOM CSS FOR LEAFLET PINS & TOOLTIPS ── */}
+      <style>{`
+        /* Grayscale base map */
+        .grayscale-tiles { filter: grayscale(100%) contrast(1.05) brightness(1.05); }
 
-        {/* Form panel */}
-        {showForm && (
-          <div className="border border-slate-900 dark:border-slate-600 rounded-sm p-6 bg-white dark:bg-slate-900 space-y-6">
-            <h2 className="font-display text-2xl uppercase tracking-wider text-[#e76e3c] border-b border-slate-200 dark:border-slate-800 pb-2">
-              {isEditing ? "Editar Detalhes do Espaço" : "Mapear Novo Espaço Periférico"}
-            </h2>
-            
-            <form className="grid gap-6 lg:grid-cols-2" onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="nome">Nome do Espaço</Label>
-                  <TextInput id="nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Praça do Sarau Comunidade" required />
-                </div>
-                <div>
-                  <Label htmlFor="endereco">Endereço</Label>
-                  <TextInput id="endereco" value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Rua das Flores, 123 - Bairro" required />
-                </div>
-                <div>
-                  <Label htmlFor="descricao">Descrição / Histórico</Label>
-                  <TextInput id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex: Ponto de encontro comunitário aos domingos..." />
-                </div>
-                <div>
-                  <Label htmlFor="capacidade">Capacidade Aproximada de Público</Label>
-                  <TextInput
-                    id="capacidade"
-                    type="number"
-                    value={capacidade}
-                    onChange={(e) => setCapacidade(Number(e.target.value))}
+        /* Pin circle */
+        .ocupa-pin { background: none !important; border: none !important; }
+        .ocupa-pin-circle {
+          width: 48px; height: 48px; border-radius: 50%;
+          border: 3px solid #e76e3c; overflow: hidden;
+          background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+          transition: transform 0.2s ease, border-color 0.2s ease;
+          cursor: pointer; position: relative;
+        }
+        .ocupa-pin-circle:hover { transform: scale(1.25); border-color: #1b1cbb; z-index: 999 !important; }
+        .ocupa-pin-circle img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .ocupa-pin-default {
+          display: flex; align-items: center; justify-content: center; color: #e76e3c;
+        }
+        .ocupa-pin-default svg { width: 24px; height: 24px; }
+
+        /* Tooltip */
+        .ocupa-tip-wrap {
+          background: transparent !important; border: none !important;
+          box-shadow: none !important; padding: 0 !important;
+        }
+        .ocupa-tip-wrap::before, .ocupa-tip-wrap .leaflet-tooltip-arrow { display: none !important; }
+        .leaflet-tooltip.ocupa-tip-wrap { pointer-events: none; }
+        .ocupa-tip {
+          background: #fff; border-radius: 4px; overflow: hidden;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.22); width: 230px;
+          border: 1px solid #0f172a;
+        }
+        .ocupa-tip img { width: 100%; height: 110px; object-fit: cover; display: block; }
+        .ocupa-tip-body {
+          padding: 8px 10px; display: flex; flex-direction: column; gap: 2px;
+        }
+        .ocupa-tip-body strong {
+          font-family: 'Bebas Neue', sans-serif; font-size: 15px;
+          letter-spacing: 0.06em; text-transform: uppercase; color: #0f172a;
+        }
+        .ocupa-tip-body span { font-size: 11px; color: #64748b; line-height: 1.3; }
+        .ocupa-tip-body em {
+          font-family: 'Bebas Neue', sans-serif; font-style: normal;
+          color: #e76e3c; font-size: 12px; text-transform: uppercase;
+          letter-spacing: 0.06em; margin-top: 2px;
+        }
+        /* Dark mode tooltip */
+        .dark .ocupa-tip { background: #0f172a; border-color: #475569; }
+        .dark .ocupa-tip-body strong { color: #f1f5f9; }
+        .dark .ocupa-tip-body span { color: #94a3b8; }
+        .dark .ocupa-pin-circle { background: #1e293b; }
+
+        /* Detail panel slide */
+        .panel-slide { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+        /* Custom scrollbar for gallery */
+        .gallery-scroll::-webkit-scrollbar { height: 4px; }
+        .gallery-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 2px; }
+        .gallery-scroll::-webkit-scrollbar-track { background: transparent; }
+      `}</style>
+
+      <div className="relative bg-white dark:bg-slate-950" style={{ height: "calc(100vh - 65px)" }}>
+        {/* ═══════ FILTER BAR (floating on map) ═══════ */}
+        <div className="absolute top-0 left-0 right-0 z-[1000] p-3" style={selectedEspaco ? { right: "420px" } : {}}>
+          <div className="mx-auto max-w-5xl">
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-900 dark:border-slate-600 rounded-sm p-3 space-y-2 shadow-lg">
+              <div className="flex items-center gap-3">
+                {/* Search */}
+                <div className="relative flex-1">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Buscar espaço por nome..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm bg-transparent border border-slate-300 dark:border-slate-700 rounded-sm focus:border-[#e76e3c] focus:ring-1 focus:ring-[#e76e3c] text-slate-900 dark:text-white placeholder-slate-400 outline-none"
                   />
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="latitude">Latitude</Label>
-                    <TextInput id="latitude" value={latitude} onChange={(e) => setLatitude(e.target.value)} required />
-                  </div>
-                  <div>
-                    <Label htmlFor="longitude">Longitude</Label>
-                    <TextInput id="longitude" value={longitude} onChange={(e) => setLongitude(e.target.value)} required />
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 italic">Dica: Você também pode clicar em qualquer local no mapa à direita para preencher a Latitude e Longitude automaticamente!</p>
+
+                {user && (
+                  <button
+                    onClick={() => setShowForm(true)}
+                    className="bg-[#e76e3c] hover:bg-[#d65d2b] text-white font-display text-sm tracking-wider uppercase rounded-sm px-4 py-2 transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    + Mapear Espaço
+                  </button>
+                )}
               </div>
 
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <h3 className="font-display text-sm uppercase text-slate-500 tracking-wider">Atributos Físicos</h3>
-                  <div className="grid grid-cols-2 gap-4 bg-slate-100/50 dark:bg-slate-800/50 p-4 rounded-sm border border-slate-200 dark:border-slate-700">
-                    <ToggleSwitch checked={cobertura} label="Cobertura" onChange={() => setCobertura(!cobertura)} />
-                    <ToggleSwitch checked={iluminacao} label="Iluminação" onChange={() => setIluminacao(!iluminacao)} />
-                    <ToggleSwitch checked={energia} label="Energia Elétrica" onChange={() => setEnergia(!energia)} />
-                    <ToggleSwitch checked={banheiro} label="Banheiro Público" onChange={() => setBanheiro(!banheiro)} />
+              {/* Filter chips */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="font-display text-[10px] tracking-wider uppercase text-slate-500 dark:text-slate-400 mr-1">Atividades:</span>
+                {[
+                  { label: "Grafite", active: filterGrafite, toggle: () => setFilterGrafite(!filterGrafite) },
+                  { label: "Batalha de Rima", active: filterBatalha, toggle: () => setFilterBatalha(!filterBatalha) },
+                  { label: "Dança", active: filterDanca, toggle: () => setFilterDanca(!filterDanca) },
+                ].map((f) => (
+                  <button
+                    key={f.label}
+                    onClick={f.toggle}
+                    className={`font-display text-[11px] tracking-wider uppercase px-2.5 py-1 rounded-sm border transition-all cursor-pointer ${
+                      f.active
+                        ? "bg-[#e76e3c] text-white border-[#e76e3c]"
+                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-[#e76e3c]"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+
+                <span className="font-display text-[10px] tracking-wider uppercase text-slate-500 dark:text-slate-400 ml-2 mr-1">Estrutura:</span>
+                {[
+                  { label: "Cobertura", active: filterCobertura, toggle: () => setFilterCobertura(!filterCobertura) },
+                  { label: "Iluminação", active: filterIluminacao, toggle: () => setFilterIluminacao(!filterIluminacao) },
+                  { label: "Energia", active: filterEnergia, toggle: () => setFilterEnergia(!filterEnergia) },
+                  { label: "Banheiro", active: filterBanheiro, toggle: () => setFilterBanheiro(!filterBanheiro) },
+                ].map((f) => (
+                  <button
+                    key={f.label}
+                    onClick={f.toggle}
+                    className={`font-display text-[11px] tracking-wider uppercase px-2.5 py-1 rounded-sm border transition-all cursor-pointer ${
+                      f.active
+                        ? "bg-[#1b1cbb] text-white border-[#1b1cbb]"
+                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-[#1b1cbb]"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ═══════ MAIN: MAP + DETAIL PANEL ═══════ */}
+        <div className="h-full flex">
+          {/* MAP */}
+          <div className="flex-1 relative min-w-0">
+            <div id="espacos-map" className="w-full h-full" />
+
+            {/* Mapa / Satélite toggle */}
+            <div className="absolute bottom-6 left-4 z-[1000] flex rounded-sm overflow-hidden border border-slate-900 dark:border-slate-600 shadow-lg">
+              <button
+                onClick={() => setMapMode("mapa")}
+                className={`font-display text-xs tracking-wider uppercase px-3 py-1.5 transition-colors cursor-pointer ${
+                  mapMode === "mapa"
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                    : "bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                }`}
+              >
+                Mapa
+              </button>
+              <button
+                onClick={() => setMapMode("satelite")}
+                className={`font-display text-xs tracking-wider uppercase px-3 py-1.5 transition-colors cursor-pointer ${
+                  mapMode === "satelite"
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                    : "bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                }`}
+              >
+                Satélite
+              </button>
+            </div>
+
+            {/* Counter badge */}
+            <div className="absolute bottom-6 right-4 z-[1000]" style={selectedEspaco ? { display: "none" } : {}}>
+              <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-slate-900 dark:border-slate-600 rounded-sm px-3 py-1.5 shadow-lg">
+                <span className="font-display text-xs tracking-wider uppercase text-slate-900 dark:text-white">
+                  {filteredEspacos.length} espaço{filteredEspacos.length !== 1 ? "s" : ""} mapeado{filteredEspacos.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* ═══════ DETAIL PANEL (right side) ═══════ */}
+          {selectedEspaco && (
+            <div
+              ref={panelRef}
+              className="panel-slide w-full sm:w-[420px] h-full overflow-y-auto bg-white dark:bg-slate-900 border-l border-slate-900 dark:border-slate-600 flex-shrink-0 relative"
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setSelectedEspaco(null)}
+                className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center bg-white/90 dark:bg-slate-800/90 rounded-full border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:text-[#e76e3c] hover:border-[#e76e3c] cursor-pointer transition-colors text-lg font-bold"
+                title="Fechar"
+              >
+                ×
+              </button>
+
+              {/* Cover photo */}
+              {selectedEspaco.mediaItems?.[0]?.url ? (
+                <div className="relative h-[280px] w-full overflow-hidden">
+                  <img
+                    src={selectedEspaco.mediaItems[0].url}
+                    alt={selectedEspaco.nome}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent" />
+                </div>
+              ) : (
+                <div className="h-[180px] w-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <svg className="w-16 h-16 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+              )}
+
+              {/* Info content */}
+              <div className="p-5 space-y-4">
+                <div>
+                  <h2 className="font-display text-2xl uppercase tracking-wider text-slate-900 dark:text-white leading-tight">
+                    {selectedEspaco.nome}
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {selectedEspaco.endereco || "Endereço não cadastrado"}
+                  </p>
+                </div>
+
+                {/* Capacity badge */}
+                <div className="flex items-center gap-2">
+                  <span className="font-display text-xs px-2.5 py-0.5 bg-[#e76e3c] text-white uppercase tracking-wider rounded">
+                    Capacidade: {selectedEspaco.capacidade || 0} Pessoas
+                  </span>
+                </div>
+
+                {/* Description */}
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-justify">
+                  {selectedEspaco.descricao || "Sem descrição cadastrada."}
+                </p>
+
+                {/* Infrastructure tags */}
+                <div className="space-y-2">
+                  <h4 className="font-display text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Infraestrutura</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedEspaco.cobertura && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Coberto</span>}
+                    {selectedEspaco.iluminacao && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Iluminado</span>}
+                    {selectedEspaco.energia && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Energia</span>}
+                    {selectedEspaco.banheiro && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Banheiro</span>}
+                    {!selectedEspaco.cobertura && !selectedEspaco.iluminacao && !selectedEspaco.energia && !selectedEspaco.banheiro && (
+                      <span className="text-xs text-slate-400 italic">Nenhuma informação</span>
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="font-display text-sm uppercase text-slate-500 tracking-wider">Atividades Permitidas</h3>
-                  <div className="grid grid-cols-2 gap-4 bg-slate-100/50 dark:bg-slate-800/50 p-4 rounded-sm border border-slate-200 dark:border-slate-700">
-                    <ToggleSwitch checked={permiteGrafite} label="Grafite / Mural" onChange={() => setPermiteGrafite(!permiteGrafite)} />
-                    <ToggleSwitch checked={permiteBatalha} label="Batalha de Rimas" onChange={() => setPermiteBatalha(!permiteBatalha)} />
-                    <ToggleSwitch checked={permiteDanca} label="Danças / B-Boys" onChange={() => setPermiteDanca(!permiteDanca)} />
+                {/* Activities tags */}
+                <div className="space-y-2">
+                  <h4 className="font-display text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Atividades Permitidas</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedEspaco.permiteGrafite && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Grafite / Mural</span>}
+                    {selectedEspaco.permiteBatalha && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Batalha de Rima</span>}
+                    {selectedEspaco.permiteDanca && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Dança / B-Boy</span>}
+                    {!selectedEspaco.permiteGrafite && !selectedEspaco.permiteBatalha && !selectedEspaco.permiteDanca && (
+                      <span className="text-xs text-slate-400 italic">Nenhuma informação</span>
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="font-display text-sm uppercase text-slate-500 tracking-wider">Galeria de Fotos (URL)</h3>
-                  <div className="flex gap-2">
-                    <TextInput
-                      placeholder="https://exemplo.com/foto.jpg"
-                      value={mediaUrlInput}
-                      onChange={(e) => setMediaUrlInput(e.target.value)}
-                      className="flex-1"
-                    />
-                    <TextInput
-                      placeholder="Legenda (opcional)"
-                      value={mediaCaptionInput}
-                      onChange={(e) => setMediaCaptionInput(e.target.value)}
-                      className="flex-1"
-                    />
+                {/* Admin actions */}
+                {user && (user.role === "ADMIN" || user.email === selectedEspaco.criadoPorEmail) && (
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex gap-2">
                     <button
-                      type="button"
-                      onClick={handleAddMedia}
-                      className="bg-[#1b1cbb] hover:bg-[#15169a] text-white font-display text-base tracking-wider uppercase rounded-sm px-3 py-1.5 transition-colors cursor-pointer"
+                      onClick={() => { fillForm(selectedEspaco); setSelectedEspaco(null); }}
+                      className="bg-[#1b1cbb] hover:bg-[#15169a] text-white font-display text-xs tracking-wider uppercase rounded-sm px-3 py-1.5 transition-colors cursor-pointer"
                     >
-                      Adicionar
+                      Editar
                     </button>
-                  </div>
-                </div>
-
-                {mediaList.length > 0 && (
-                  <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 md:grid-cols-6 mt-4">
-                    {mediaList.map((item, idx) => (
-                      <div key={idx} className="relative overflow-hidden group p-2 border border-slate-900 dark:border-slate-700 rounded-sm bg-slate-50 dark:bg-slate-800">
-                        <div className="h-20 bg-slate-200 dark:bg-slate-800 flex items-center justify-center rounded-sm overflow-hidden">
-                          <img src={item.url} alt={item.caption} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="mt-1">
-                          <p className="font-semibold text-xs truncate text-slate-700 dark:text-slate-300">{item.caption || "Sem legenda"}</p>
-                          <button
-                            type="button"
-                            className="mt-1 w-full bg-red-600 hover:bg-red-700 text-white font-display text-xs tracking-wider uppercase rounded-sm py-1 cursor-pointer transition-colors"
-                            onClick={() => setMediaList(mediaList.filter((_, i) => i !== idx))}
-                          >
-                            Remover
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                    <button
+                      onClick={() => { handleDelete(selectedEspaco.id); setSelectedEspaco(null); }}
+                      className="bg-red-600 hover:bg-red-700 text-white font-display text-xs tracking-wider uppercase rounded-sm px-3 py-1.5 transition-colors cursor-pointer"
+                    >
+                      Excluir
+                    </button>
                   </div>
                 )}
               </div>
 
-              {error && <Alert color="failure" className="lg:col-span-2">{error}</Alert>}
+              {/* Horizontal photo gallery */}
+              {selectedEspaco.mediaItems && selectedEspaco.mediaItems.length > 1 && (
+                <div className="border-t border-slate-200 dark:border-slate-800 p-4">
+                  <h4 className="font-display text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                    Galeria de Fotos
+                  </h4>
+                  <div className="flex gap-3 overflow-x-auto pb-2 gallery-scroll">
+                    {selectedEspaco.mediaItems.slice(1).map((media: any, idx: number) => (
+                      <div
+                        key={media.id || idx}
+                        className="flex-shrink-0 w-[150px] h-[110px] rounded-sm overflow-hidden border border-slate-900 dark:border-slate-700 hover:border-[#e76e3c] transition-colors"
+                      >
+                        <img src={media.url} alt={media.caption || ""} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
-              <div className="lg:col-span-2 flex gap-3 pt-2">
+        {/* ═══════ FORM MODAL OVERLAY ═══════ */}
+        {showForm && (
+          <div
+            className="absolute inset-0 z-[2000] bg-black/60 flex items-center justify-center p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) resetForm(); }}
+          >
+            <div className="bg-white dark:bg-slate-900 border border-slate-900 dark:border-slate-600 rounded-sm w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                <h2 className="font-display text-2xl uppercase tracking-wider text-[#e76e3c]">
+                  {isEditing ? "Editar Detalhes do Espaço" : "Mapear Novo Espaço Periférico"}
+                </h2>
                 <button
-                  type="submit"
-                  className="bg-[#e76e3c] hover:bg-[#d65d2b] text-white font-display text-lg tracking-wider uppercase rounded-sm px-5 py-2 transition-colors cursor-pointer"
-                >
-                  {isEditing ? "Atualizar" : "Salvar Espaço"}
-                </button>
-                <button
-                  type="button"
                   onClick={resetForm}
-                  className="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-800 dark:text-slate-200 font-display text-lg tracking-wider uppercase rounded-sm px-5 py-2 transition-colors cursor-pointer"
+                  className="text-slate-500 hover:text-slate-900 dark:hover:text-white text-2xl cursor-pointer transition-colors"
                 >
-                  Cancelar
+                  ×
                 </button>
               </div>
-            </form>
-          </div>
-        )}
 
-        {/* Map and Directory Container */}
-        <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-          {/* Map display */}
-          <div className="border border-slate-900 dark:border-slate-600 rounded-sm overflow-hidden bg-white dark:bg-slate-900 p-0">
-            <h3 className="font-display text-xl uppercase tracking-wider p-4 border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
-              Mapeamento Afetivo de Espaços
-            </h3>
-            <div id="map" className="w-full h-[450px]"></div>
-          </div>
-
-          {/* Spaces directory */}
-          <div className="space-y-4 max-h-[520px] overflow-y-auto pr-2">
-            <h3 className="font-display text-xl uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 pb-2 text-slate-900 dark:text-white">
-              Lista de Espaços
-            </h3>
-            
-            {espacos.length > 0 ? (
-              espacos.map((espaco) => (
-                <div
-                  key={espaco.id}
-                  className="border border-slate-900 dark:border-slate-600 rounded-sm p-4 bg-white dark:bg-slate-900 hover:border-ocupa hover:shadow-md transition-all cursor-pointer group space-y-3"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h2 className="font-display text-xl uppercase tracking-wider text-slate-900 dark:text-white group-hover:text-ocupa transition-colors">
-                        {espaco.nome}
-                      </h2>
-                      <p className="text-xs text-slate-500">{espaco.endereco}</p>
-                    </div>
-                    <span className="font-display text-xs px-2 py-0.5 rounded bg-[#e76e3c] text-white uppercase tracking-wider whitespace-nowrap">
-                      {espaco.capacidade || 0} Pessoas
-                    </span>
+              <form className="grid gap-6 lg:grid-cols-2" onSubmit={handleSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="nome">Nome do Espaço</Label>
+                    <TextInput id="nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Praça do Sarau Comunidade" required />
                   </div>
-                  
-                  <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed line-clamp-2 text-justify">
-                    {espaco.descricao || "Sem descrição cadastrada."}
-                  </p>
+                  <div>
+                    <Label htmlFor="endereco">Endereço</Label>
+                    <TextInput id="endereco" value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Rua das Flores, 123 - Bairro" required />
+                  </div>
+                  <div>
+                    <Label htmlFor="descricao">Descrição / Histórico</Label>
+                    <TextInput id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex: Ponto de encontro comunitário aos domingos..." />
+                  </div>
+                  <div>
+                    <Label htmlFor="capacidade">Capacidade Aproximada de Público</Label>
+                    <TextInput id="capacidade" type="number" value={capacidade} onChange={(e) => setCapacidade(Number(e.target.value))} />
+                  </div>
 
-                  {/* Space media items compact gallery */}
-                  {espaco.mediaItems && espaco.mediaItems.length > 0 && (
-                    <div className="grid grid-cols-3 gap-2 mt-3">
-                      {espaco.mediaItems.map((media: any) => (
-                        <div key={media.id} className="h-16 rounded-sm overflow-hidden border border-slate-900 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 relative group">
-                          <img src={media.url} alt={media.caption} className="w-full h-full object-cover" />
-                          {media.caption && (
-                            <div className="absolute inset-x-0 bottom-0 bg-black/60 text-white text-[10px] truncate p-1 text-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              {media.caption}
-                            </div>
-                          )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="latitude">Latitude</Label>
+                      <TextInput id="latitude" value={latitude} onChange={(e) => setLatitude(e.target.value)} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="longitude">Longitude</Label>
+                      <TextInput id="longitude" value={longitude} onChange={(e) => setLongitude(e.target.value)} required />
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 italic">Dica: Feche este formulário e clique no mapa para preencher as coordenadas automaticamente.</p>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <h3 className="font-display text-sm uppercase text-slate-500 tracking-wider">Atributos Físicos</h3>
+                    <div className="grid grid-cols-2 gap-4 bg-slate-100/50 dark:bg-slate-800/50 p-4 rounded-sm border border-slate-200 dark:border-slate-700">
+                      <ToggleSwitch checked={cobertura} label="Cobertura" onChange={() => setCobertura(!cobertura)} />
+                      <ToggleSwitch checked={iluminacao} label="Iluminação" onChange={() => setIluminacao(!iluminacao)} />
+                      <ToggleSwitch checked={energia} label="Energia Elétrica" onChange={() => setEnergia(!energia)} />
+                      <ToggleSwitch checked={banheiro} label="Banheiro Público" onChange={() => setBanheiro(!banheiro)} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="font-display text-sm uppercase text-slate-500 tracking-wider">Atividades Permitidas</h3>
+                    <div className="grid grid-cols-2 gap-4 bg-slate-100/50 dark:bg-slate-800/50 p-4 rounded-sm border border-slate-200 dark:border-slate-700">
+                      <ToggleSwitch checked={permiteGrafite} label="Grafite / Mural" onChange={() => setPermiteGrafite(!permiteGrafite)} />
+                      <ToggleSwitch checked={permiteBatalha} label="Batalha de Rimas" onChange={() => setPermiteBatalha(!permiteBatalha)} />
+                      <ToggleSwitch checked={permiteDanca} label="Danças / B-Boys" onChange={() => setPermiteDanca(!permiteDanca)} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="font-display text-sm uppercase text-slate-500 tracking-wider">Galeria de Fotos (URL)</h3>
+                    <div className="flex gap-2">
+                      <TextInput placeholder="https://exemplo.com/foto.jpg" value={mediaUrlInput} onChange={(e) => setMediaUrlInput(e.target.value)} className="flex-1" />
+                      <TextInput placeholder="Legenda (opcional)" value={mediaCaptionInput} onChange={(e) => setMediaCaptionInput(e.target.value)} className="flex-1" />
+                      <button type="button" onClick={handleAddMedia} className="bg-[#1b1cbb] hover:bg-[#15169a] text-white font-display text-base tracking-wider uppercase rounded-sm px-3 py-1.5 transition-colors cursor-pointer">
+                        Adicionar
+                      </button>
+                    </div>
+                  </div>
+
+                  {mediaList.length > 0 && (
+                    <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 mt-4">
+                      {mediaList.map((item, idx) => (
+                        <div key={idx} className="relative overflow-hidden p-2 border border-slate-900 dark:border-slate-700 rounded-sm bg-slate-50 dark:bg-slate-800">
+                          <div className="h-20 bg-slate-200 dark:bg-slate-800 flex items-center justify-center rounded-sm overflow-hidden">
+                            <img src={item.url} alt={item.caption} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="mt-1">
+                            <p className="font-semibold text-xs truncate text-slate-700 dark:text-slate-300">{item.caption || "Sem legenda"}</p>
+                            <button
+                              type="button"
+                              className="mt-1 w-full bg-red-600 hover:bg-red-700 text-white font-display text-xs tracking-wider uppercase rounded-sm py-1 cursor-pointer transition-colors"
+                              onClick={() => setMediaList(mediaList.filter((_, i) => i !== idx))}
+                            >
+                              Remover
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
-
-                  <div className="flex flex-wrap gap-1 mt-3">
-                    {espaco.cobertura && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Coberto</span>}
-                    {espaco.iluminacao && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Iluminado</span>}
-                    {espaco.energia && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Energia</span>}
-                    {espaco.banheiro && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Banheiro</span>}
-                    {espaco.permiteGrafite && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Grafite</span>}
-                    {espaco.permiteBatalha && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Batalha</span>}
-                    {espaco.permiteDanca && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Dança</span>}
-                  </div>
-
-                  {user && (user.role === "ADMIN" || user.email === espaco.criadoPorEmail) && (
-                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex gap-2">
-                      <button
-                        onClick={() => fillForm(espaco)}
-                        className="bg-[#1b1cbb] hover:bg-[#15169a] text-white font-display text-xs tracking-wider uppercase rounded-sm px-3 py-1 transition-colors cursor-pointer"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDelete(espaco.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white font-display text-xs tracking-wider uppercase rounded-sm px-3 py-1 transition-colors cursor-pointer"
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  )}
                 </div>
-              ))
-            ) : (
-              <p className="text-slate-500 italic text-sm">Nenhum espaço mapeado ainda.</p>
-            )}
+
+                {error && <Alert color="failure" className="lg:col-span-2">{error}</Alert>}
+
+                <div className="lg:col-span-2 flex gap-3 pt-2">
+                  <button
+                    type="submit"
+                    className="bg-[#e76e3c] hover:bg-[#d65d2b] text-white font-display text-lg tracking-wider uppercase rounded-sm px-5 py-2 transition-colors cursor-pointer"
+                  >
+                    {isEditing ? "Atualizar" : "Salvar Espaço"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="font-body font-semibold text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer px-4 py-2"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
+        )}
       </div>
-    </div>
+    </>
   );
 }
