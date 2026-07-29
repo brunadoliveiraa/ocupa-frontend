@@ -7,7 +7,26 @@ import {
   NavbarLink,
   NavbarToggle,
 } from "flowbite-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+const ROUTE_TO_PATH: Record<string, string> = {
+  home: "/",
+  artistas: "/artistas",
+  espacos: "/espacos",
+  eventos: "/agenda",
+  oportunidades: "/oportunidades",
+  painel: "/painel",
+  login: "/login",
+  register: "/cadastrar",
+};
+
+function pathToRoute(pathname: string): string {
+  const p = pathname.toLowerCase().replace(/\/+$/, "") || "/";
+  for (const [route, path] of Object.entries(ROUTE_TO_PATH)) {
+    if (p === path) return route;
+  }
+  return "home";
+}
 import ArtistasPage from "./pages/ArtistasPage";
 import EspacosPage from "./pages/EspacosPage";
 import EventosPage from "./pages/EventosPage";
@@ -19,7 +38,21 @@ import RegisterPage from "./pages/RegisterPage";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 export default function App() {
-  const [route, setRoute] = useState("home");
+  const [route, setRoute] = useState(() => pathToRoute(window.location.pathname));
+
+  const navigate = useCallback((r: string) => {
+    setRoute(r);
+    const path = ROUTE_TO_PATH[r] || "/";
+    if (window.location.pathname !== path) {
+      window.history.pushState(null, "", path);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onPop = () => setRoute(pathToRoute(window.location.pathname));
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
   const [user, setUser] = useState<any>(() => {
     if (typeof window === "undefined") return null;
     const stored = window.localStorage.getItem("ocupaUser");
@@ -74,16 +107,16 @@ export default function App() {
           <LoginPage
             onLoginSuccess={(u) => {
               setUser(u);
-              setRoute("painel");
+              navigate("painel");
             }}
-            onNavigateToRegister={() => setRoute("register")}
+            onNavigateToRegister={() => navigate("register")}
           />
         );
       case "register":
         return (
           <RegisterPage
-            onRegisterSuccess={() => setRoute("login")}
-            onNavigateToLogin={() => setRoute("login")}
+            onRegisterSuccess={() => navigate("login")}
+            onNavigateToLogin={() => navigate("login")}
           />
         );
       default:
@@ -127,7 +160,7 @@ export default function App() {
                         ].map((item) => (
                           <div
                             key={item.label}
-                            onClick={() => setRoute(item.target)}
+                            onClick={() => navigate(item.target)}
                             className="border border-slate-900 dark:border-slate-600 rounded-sm p-2.5 cursor-pointer hover:border-ocupa dark:hover:border-ocupa transition-colors group bg-slate-50/50 dark:bg-slate-800/30"
                           >
                             <p className="text-[11px] font-body text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{item.label}</p>
@@ -156,21 +189,21 @@ export default function App() {
                     <div className="space-y-4">
                       <div className="flex flex-wrap items-center gap-3">
                         <button
-                          onClick={() => setRoute("register")}
+                          onClick={() => navigate("register")}
                           className="cursor-pointer font-display text-xl tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-ocupa transition-colors"
                         >
                           Cadastre-se
                         </button>
                         <span className="w-2 h-2 rounded-full bg-slate-900 dark:bg-slate-400" />
                         <button
-                          onClick={() => setRoute("artistas")}
+                          onClick={() => navigate("artistas")}
                           className="cursor-pointer font-display text-xl tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-ocupa transition-colors"
                         >
                           Contrate
                         </button>
                         <span className="w-2 h-2 rounded-full bg-slate-900 dark:bg-slate-400" />
                         <button
-                          onClick={() => setRoute("espacos")}
+                          onClick={() => navigate("espacos")}
                           className="cursor-pointer font-display text-xl tracking-widest uppercase text-blue-900 dark:text-blue-400 hover:text-ocupa transition-colors"
                         >
                           Conheça Espaços
@@ -198,22 +231,22 @@ export default function App() {
                           {
                             title: "Artistas e Serviços",
                             desc: "Veja portfólios, contatos e solicite orçamentos.",
-                            action: () => setRoute("artistas"),
+                            action: () => navigate("artistas"),
                           },
                           {
                             title: "Espaços Disponíveis",
                             desc: "Encontre praças, galerias, muros e muitos outros lugares.",
-                            action: () => setRoute("espacos"),
+                            action: () => navigate("espacos"),
                           },
                           {
                             title: "Agenda Cultural",
                             desc: "Acompanhe e cadastre batalhas de rima, mostras de dança e intervenções urbanas.",
-                            action: () => setRoute("eventos"),
+                            action: () => navigate("eventos"),
                           },
                           {
                             title: "Oportunidades",
                             desc: "Consulte editais de fomento, bolsas, chamadas residências e vagas.",
-                            action: () => setRoute("oportunidades"),
+                            action: () => navigate("oportunidades"),
                           },
                         ].map((item) => (
                           <div
@@ -294,7 +327,7 @@ export default function App() {
           </main>
         );
     }
-  }, [route, stats, user]);
+  }, [route, stats, user, navigate]);
 
   return (
     <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col justify-between">
@@ -302,7 +335,7 @@ export default function App() {
         {/* ═══════ NAVBAR ═══════ */}
         <Navbar fluid rounded className="border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95 sticky top-0 z-50 backdrop-blur-md px-0 py-2">
           <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between">
-            <NavbarBrand href="#" onClick={() => setRoute("home")} className="py-1">
+            <NavbarBrand href="#" onClick={() => navigate("home")} className="py-1">
               <img
                 src="/logo_ocupa.svg"
                 alt="OCUPA - O território fala o Ocupa conecta"
@@ -320,7 +353,7 @@ export default function App() {
               {user ? (
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setRoute("painel")}
+                    onClick={() => navigate("painel")}
                     className={`font-display text-base sm:text-lg tracking-widest uppercase transition-colors cursor-pointer ${
                       route === "painel" ? "text-ocupa font-bold" : "text-slate-900 dark:text-white hover:text-ocupa"
                     }`}
@@ -331,7 +364,7 @@ export default function App() {
                     onClick={() => {
                       window.localStorage.removeItem("ocupaUser");
                       setUser(null);
-                      setRoute("home");
+                      navigate("home");
                     }}
                     className="font-display text-base sm:text-lg tracking-widest uppercase text-slate-500 hover:text-ocupa transition-colors cursor-pointer"
                   >
@@ -341,7 +374,7 @@ export default function App() {
               ) : (
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setRoute("login")}
+                    onClick={() => navigate("login")}
                     className={`font-display text-base sm:text-lg tracking-widest uppercase transition-colors cursor-pointer ${
                       route === "login" ? "text-ocupa font-bold" : "text-slate-900 dark:text-white hover:text-ocupa"
                     }`}
@@ -349,7 +382,7 @@ export default function App() {
                     Entrar
                   </button>
                   <button
-                    onClick={() => setRoute("register")}
+                    onClick={() => navigate("register")}
                     className={`font-display text-base sm:text-lg tracking-widest uppercase transition-colors cursor-pointer ${
                       route === "register" ? "text-ocupa font-bold" : "text-slate-900 dark:text-white hover:text-ocupa"
                     }`}
@@ -362,19 +395,19 @@ export default function App() {
             </div>
 
             <NavbarCollapse>
-              <NavbarLink active={route === "home"} onClick={() => setRoute("home")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
+              <NavbarLink active={route === "home"} onClick={() => navigate("home")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
                 Home
               </NavbarLink>
-              <NavbarLink active={route === "artistas"} onClick={() => setRoute("artistas")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
+              <NavbarLink active={route === "artistas"} onClick={() => navigate("artistas")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
                 Artistas
               </NavbarLink>
-              <NavbarLink active={route === "espacos"} onClick={() => setRoute("espacos")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
+              <NavbarLink active={route === "espacos"} onClick={() => navigate("espacos")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
                 Espaços
               </NavbarLink>
-              <NavbarLink active={route === "eventos"} onClick={() => setRoute("eventos")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
+              <NavbarLink active={route === "eventos"} onClick={() => navigate("eventos")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
                 Agenda
               </NavbarLink>
-              <NavbarLink active={route === "oportunidades"} onClick={() => setRoute("oportunidades")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
+              <NavbarLink active={route === "oportunidades"} onClick={() => navigate("oportunidades")} className="cursor-pointer font-display tracking-widest uppercase text-base sm:text-lg hover:text-ocupa">
                 Oportunidades
               </NavbarLink>
             </NavbarCollapse>
@@ -406,7 +439,7 @@ export default function App() {
                 src="/logo_ocupa.svg"
                 alt="OCUPA"
                 className="h-10 sm:h-12 lg:h-20 w-auto object-contain block dark:hidden cursor-pointer"
-                onClick={() => setRoute("home")}
+                onClick={() => navigate("home")}
               />
               <img
                 src="/logo_ocupa_branco.svg"
@@ -424,7 +457,7 @@ export default function App() {
               <ul className="space-y-1.5 text-xs">
                 <li>
                   <button
-                    onClick={() => setRoute("artistas")}
+                    onClick={() => navigate("artistas")}
                     className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap"
                   >
                     Artistas
@@ -432,7 +465,7 @@ export default function App() {
                 </li>
                 <li>
                   <button
-                    onClick={() => setRoute("espacos")}
+                    onClick={() => navigate("espacos")}
                     className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap"
                   >
                     Espaços
@@ -449,7 +482,7 @@ export default function App() {
               <ul className="space-y-1.5 text-xs">
                 <li>
                   <button
-                    onClick={() => setRoute("eventos")}
+                    onClick={() => navigate("eventos")}
                     className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap"
                   >
                     Agenda
@@ -457,7 +490,7 @@ export default function App() {
                 </li>
                 <li>
                   <button
-                    onClick={() => setRoute("oportunidades")}
+                    onClick={() => navigate("oportunidades")}
                     className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap"
                   >
                     Oportunidades
