@@ -239,8 +239,34 @@ export default function EventosPage({ user }: EventosPageProps) {
                 </div>
 
                 <div>
-                  <Label htmlFor="fotoUrl">URL da Foto de Capa (Opcional)</Label>
-                  <TextInput id="fotoUrl" value={fotoUrl} onChange={(e) => setFotoUrl(e.target.value)} placeholder="https://exemplo.com/cartaz.jpg" />
+                  <Label htmlFor="fotoUrl">Foto de Capa (Opcional)</Label>
+                  <input
+                    id="fotoUrl"
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const base64 = await new Promise<string>((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.readAsDataURL(file);
+                            reader.onload = () => resolve(reader.result as string);
+                            reader.onerror = (error) => reject(error);
+                          });
+                          setFotoUrl(base64);
+                        } catch (err) {
+                          console.error("Erro ao converter imagem:", err);
+                        }
+                      }
+                    }}
+                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-sm file:font-display file:uppercase file:bg-[#1b1cbb] file:text-white hover:file:bg-[#15169a] cursor-pointer"
+                  />
+                  {fotoUrl && (
+                    <div className="mt-2 h-24 w-full rounded-sm overflow-hidden border border-slate-900">
+                      <img src={fotoUrl} alt="Preview da foto de capa" className="w-full h-full object-cover" />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -389,7 +415,7 @@ export default function EventosPage({ user }: EventosPageProps) {
 
         {/* Details Modal */}
         {detailEvent && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 z-[5010] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="bg-white dark:bg-slate-900 rounded-sm max-w-lg w-full overflow-hidden shadow-2xl border border-slate-900 dark:border-slate-800 flex flex-col max-h-[90vh]">
               {/* Header */}
               <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">

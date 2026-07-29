@@ -351,7 +351,7 @@ export default function OportunidadesPage({ user }: OportunidadesPageProps) {
 
         {/* Details Modal */}
         {detailOportunidade && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 z-[5010] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="bg-white dark:bg-slate-900 rounded-sm max-w-lg w-full overflow-hidden shadow-2xl border border-slate-900 dark:border-slate-800 flex flex-col max-h-[90vh]">
               {/* Header */}
               <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
