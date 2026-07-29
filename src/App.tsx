@@ -37,6 +37,75 @@ import RegisterPage from "./pages/RegisterPage";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
+function EcossistemasTooltip() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <span className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        onMouseEnter={() => setIsOpen(true)}
+        onMouseLeave={() => setIsOpen(false)}
+        onFocus={() => setIsOpen(true)}
+        onBlur={() => setIsOpen(false)}
+        aria-expanded={isOpen}
+        aria-describedby="tooltip-ecossistemas"
+        className="font-bold text-ocupa underline decoration-dotted underline-offset-4 decoration-ocupa/80 hover:decoration-ocupa transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-ocupa rounded-xs inline bg-ocupa/10 px-1 py-0.5"
+      >
+        Ecossistemas Culturais
+      </button>
+
+      {isOpen && (
+        <span
+          id="tooltip-ecossistemas"
+          role="tooltip"
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-84 sm:w-[420px] p-5 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm rounded-sm shadow-xl border border-slate-900 dark:border-slate-600 z-50 text-left font-normal normal-case leading-relaxed block pointer-events-none transition-all"
+        >
+          {/* Top Badge & Header */}
+          <span className="flex items-center justify-between gap-2 mb-3 pb-2.5 border-b border-slate-200 dark:border-slate-800">
+            <span className="flex items-center gap-2">
+              <span className="bg-ocupa text-white text-xs font-display uppercase tracking-wider px-2 py-0.5 rounded">
+                💡 Conceito
+              </span>
+              <strong className="font-display text-base tracking-wider uppercase text-ocupa">
+                Ecossistema Cultural
+              </strong>
+            </span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">📍 Território</span>
+          </span>
+
+          {/* Main Definition Text */}
+          <span className="block text-slate-700 dark:text-slate-300 text-sm leading-relaxed space-y-3">
+            <span className="block text-justify">
+              <strong className="text-slate-900 dark:text-white font-semibold">Ecossistema cultural</strong> é um território — como um bairro, comunidade ou cidade — onde artistas, coletivos, espaços culturais, produtores, instituições e moradores se conectam para criar, compartilhar e fortalecer a cultura local.
+            </span>
+
+            {/* Visual Tags Grid */}
+            <span className="grid grid-cols-2 gap-2 pt-1">
+              <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 py-1.5 rounded text-xs border border-slate-300 dark:border-slate-700">
+                🎨 Artistas & Coletivos
+              </span>
+              <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 py-1.5 rounded text-xs border border-slate-300 dark:border-slate-700">
+                🏛️ Espaços & Centros
+              </span>
+              <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 py-1.5 rounded text-xs border border-slate-300 dark:border-slate-700">
+                🎬 Produtores & Eventos
+              </span>
+              <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 py-1.5 rounded text-xs border border-slate-300 dark:border-slate-700">
+                🤝 Moradores & Rede
+              </span>
+            </span>
+          </span>
+
+          {/* Pointer Arrow */}
+          <span className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900 dark:border-t-slate-600" />
+        </span>
+      )}
+    </span>
+  );
+}
+
 export default function App() {
   const [route, setRoute] = useState(() => pathToRoute(window.location.pathname));
 
@@ -148,7 +217,7 @@ export default function App() {
                         </h2>
                         <Badge color="failure" className="font-body text-xs uppercase tracking-wider">Ao Vivo</Badge>
                       </div>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                         Acompanhe aqui em tempo real o impacto do <span className="font-display text-ocupa">OCUPA</span>. Ao fortalecer as redes culturais locais, potencializamos oportunidades econômicas e a redução de desigualdades (ODS 8 e 10).
                       </p>
                       <div className="grid grid-cols-2 gap-2.5">
@@ -275,11 +344,12 @@ export default function App() {
                     <h2 className="font-display text-4xl lg:text-5xl tracking-wider uppercase leading-tight text-slate-900 dark:text-white">
                       Quem Somos
                     </h2>
-                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm sm:text-base text-justify">
-                      Uma <strong className="text-ocupa">Plataforma de Gestão de Ecossistemas Culturais</strong>
+                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-base text-justify">
+                      Uma <span className="text-ocupa font-bold">Plataforma de Gestão de </span>
+                      <EcossistemasTooltip />
                     </p>
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
-                      Reunimos várias funcionalidades (que hoje estão dispersas em diferentes sistemas) para facilitar a produção, organização e divulgação da arte.
+                    <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
+                      Reunimos várias funcionalidades (que hoje estão dispersas em diferentes sistemas) para facilitar a produção, organização e divulgação da arte. Aqui você encontra ferramentas de orçamento, mensagens, divulgação de oportunidades, lista de espaços para intervenções artísticas, agenda de eventos, portfólio profissional e painel do empreendedor com registro de acessos, contatos, propostas de trabalho, participações em eventos e muito mais.
                     </p>
                     <hr className="border-slate-300 dark:border-slate-700 mt-4" />
                   </div>
@@ -303,7 +373,7 @@ export default function App() {
 
                       {/* Textos sobre missão */}
                       <div className="space-y-4 flex-1 w-full max-w-full">
-                        <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-justify">
+                        <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed text-justify">
                           Nosso <strong className="text-slate-900 dark:text-white font-bold">objetivo</strong> é fortalecer ecossistemas culturais para que eles produzam oportunidades, reforcem sua cultura local, ampliem a geração de renda e valorizem a memória do território.
                         </p>
 
@@ -311,8 +381,8 @@ export default function App() {
                           <p className="font-display text-base sm:text-lg tracking-wider uppercase text-slate-900 dark:text-white">
                             E como fazemos isso?
                           </p>
-                          <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-justify">
-                            O <strong className="font-display text-ocupa">OCUPA</strong> cria a infraestrutura digital que integra e divulga artistas, espaços, eventos e oportunidades, estimulando o{" "}
+                          <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed text-justify">
+                            O <strong className="font-bold text-ocupa">OCUPA</strong> cria a infraestrutura digital que integra e divulga artistas, espaços, eventos e oportunidades, estimulando o{" "}
                             <strong className="text-slate-900 dark:text-white font-bold">crescimento da economia criativa</strong>.
                           </p>
                         </div>
