@@ -274,6 +274,25 @@ export default function EspacosPage({ user }: EspacosPageProps) {
     setError(null);
   }
 
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setMediaList((prev) => [
+          ...prev,
+          { url: base64String, caption: mediaCaptionInput || file.name },
+        ]);
+        setMediaCaptionInput("");
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  }
+
   function handleAddMedia() {
     if (!mediaUrlInput) return;
     setMediaList([...mediaList, { url: mediaUrlInput, caption: mediaCaptionInput }]);
@@ -418,16 +437,16 @@ export default function EspacosPage({ user }: EspacosPageProps) {
                   {user && (
                     <button
                       onClick={handleStartMapping}
-                      className="bg-[#e76e3c] hover:bg-[#d65d2b] text-white font-display text-sm tracking-wider uppercase rounded-sm px-4 py-2 transition-colors cursor-pointer whitespace-nowrap"
+                      className="bg-[#e76e3c] hover:bg-[#d65d2b] text-white font-display text-base tracking-wider uppercase rounded-sm px-4 py-2 transition-colors cursor-pointer whitespace-nowrap"
                     >
                       + Mapear Espaço
                     </button>
                   )}
                 </div>
 
-                {/* Filter chips */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="font-display text-[10px] tracking-wider uppercase text-slate-500 dark:text-slate-400 mr-1">Atividades:</span>
+                {/* Filter chips (Fontes maiores) */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-display text-xs sm:text-sm tracking-wider uppercase text-slate-800 dark:text-slate-200 mr-1">Atividades:</span>
                   {[
                     { label: "Grafite", active: filterGrafite, toggle: () => setFilterGrafite(!filterGrafite) },
                     { label: "Batalha de Rima", active: filterBatalha, toggle: () => setFilterBatalha(!filterBatalha) },
@@ -436,17 +455,17 @@ export default function EspacosPage({ user }: EspacosPageProps) {
                     <button
                       key={f.label}
                       onClick={f.toggle}
-                      className={`font-display text-[11px] tracking-wider uppercase px-2.5 py-1 rounded-sm border transition-all cursor-pointer ${
+                      className={`font-display text-xs sm:text-sm tracking-wider uppercase px-3 py-1.5 rounded-sm border transition-all cursor-pointer ${
                         f.active
                           ? "bg-[#e76e3c] text-white border-[#e76e3c]"
-                          : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-[#e76e3c]"
+                          : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600 hover:border-[#e76e3c]"
                       }`}
                     >
                       {f.label}
                     </button>
                   ))}
 
-                  <span className="font-display text-[10px] tracking-wider uppercase text-slate-500 dark:text-slate-400 ml-2 mr-1">Estrutura:</span>
+                  <span className="font-display text-xs sm:text-sm tracking-wider uppercase text-slate-800 dark:text-slate-200 ml-3 mr-1">Infraestrutura:</span>
                   {[
                     { label: "Cobertura", active: filterCobertura, toggle: () => setFilterCobertura(!filterCobertura) },
                     { label: "Iluminação", active: filterIluminacao, toggle: () => setFilterIluminacao(!filterIluminacao) },
@@ -456,10 +475,10 @@ export default function EspacosPage({ user }: EspacosPageProps) {
                     <button
                       key={f.label}
                       onClick={f.toggle}
-                      className={`font-display text-[11px] tracking-wider uppercase px-2.5 py-1 rounded-sm border transition-all cursor-pointer ${
+                      className={`font-display text-xs sm:text-sm tracking-wider uppercase px-3 py-1.5 rounded-sm border transition-all cursor-pointer ${
                         f.active
                           ? "bg-[#1b1cbb] text-white border-[#1b1cbb]"
-                          : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-[#1b1cbb]"
+                          : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600 hover:border-[#1b1cbb]"
                       }`}
                     >
                       {f.label}
@@ -557,13 +576,13 @@ export default function EspacosPage({ user }: EspacosPageProps) {
             )}
 
             {/* Info content */}
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-5">
               <div>
-                <h2 className="font-display text-2xl uppercase tracking-wider text-slate-900 dark:text-white leading-tight">
+                <h2 className="font-display text-3xl uppercase tracking-wider text-slate-900 dark:text-white leading-tight">
                   {selectedEspaco.nome}
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
-                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
@@ -571,39 +590,43 @@ export default function EspacosPage({ user }: EspacosPageProps) {
                 </p>
               </div>
 
-              {/* Capacity badge */}
+              {/* Capacity badge (Fonte aumentada) */}
               <div className="flex items-center gap-2">
-                <span className="font-display text-xs px-2.5 py-0.5 bg-[#e76e3c] text-white uppercase tracking-wider rounded">
+                <span className="font-display text-sm sm:text-base px-3.5 py-1 bg-[#e76e3c] text-white uppercase tracking-wider rounded">
                   Capacidade: {selectedEspaco.capacidade || 0} Pessoas
                 </span>
               </div>
 
               {/* Description */}
-              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-justify">
+              <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 leading-relaxed text-justify">
                 {selectedEspaco.descricao || "Sem descrição cadastrada."}
               </p>
 
-              {/* Infrastructure tags */}
-              <div className="space-y-2">
-                <h4 className="font-display text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Infraestrutura</h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedEspaco.cobertura && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Coberto</span>}
-                  {selectedEspaco.iluminacao && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Iluminado</span>}
-                  {selectedEspaco.energia && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Energia</span>}
-                  {selectedEspaco.banheiro && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-blue-900 text-white uppercase">Banheiro</span>}
+              {/* Infrastructure tags (Fontes aumentadas) */}
+              <div className="space-y-2.5">
+                <h4 className="font-display text-sm uppercase tracking-wider text-slate-900 dark:text-white">
+                  Infraestrutura
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedEspaco.cobertura && <span className="font-display text-xs sm:text-sm px-3 py-1 rounded bg-blue-900 text-white uppercase">Coberto</span>}
+                  {selectedEspaco.iluminacao && <span className="font-display text-xs sm:text-sm px-3 py-1 rounded bg-blue-900 text-white uppercase">Iluminado</span>}
+                  {selectedEspaco.energia && <span className="font-display text-xs sm:text-sm px-3 py-1 rounded bg-blue-900 text-white uppercase">Energia</span>}
+                  {selectedEspaco.banheiro && <span className="font-display text-xs sm:text-sm px-3 py-1 rounded bg-blue-900 text-white uppercase">Banheiro</span>}
                   {!selectedEspaco.cobertura && !selectedEspaco.iluminacao && !selectedEspaco.energia && !selectedEspaco.banheiro && (
                     <span className="text-xs text-slate-400 italic">Nenhuma informação</span>
                   )}
                 </div>
               </div>
 
-              {/* Activities tags */}
-              <div className="space-y-2">
-                <h4 className="font-display text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Atividades Permitidas</h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedEspaco.permiteGrafite && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Grafite / Mural</span>}
-                  {selectedEspaco.permiteBatalha && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Batalha de Rima</span>}
-                  {selectedEspaco.permiteDanca && <span className="font-display text-[10px] px-2 py-0.5 rounded bg-emerald-700 text-white uppercase">Dança / B-Boy</span>}
+              {/* Activities tags (Fontes aumentadas) */}
+              <div className="space-y-2.5">
+                <h4 className="font-display text-sm uppercase tracking-wider text-slate-900 dark:text-white">
+                  Atividades Permitidas
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedEspaco.permiteGrafite && <span className="font-display text-xs sm:text-sm px-3 py-1 rounded bg-emerald-700 text-white uppercase">Grafite / Mural</span>}
+                  {selectedEspaco.permiteBatalha && <span className="font-display text-xs sm:text-sm px-3 py-1 rounded bg-emerald-700 text-white uppercase">Batalha de Rima</span>}
+                  {selectedEspaco.permiteDanca && <span className="font-display text-xs sm:text-sm px-3 py-1 rounded bg-emerald-700 text-white uppercase">Dança / B-Boy</span>}
                   {!selectedEspaco.permiteGrafite && !selectedEspaco.permiteBatalha && !selectedEspaco.permiteDanca && (
                     <span className="text-xs text-slate-400 italic">Nenhuma informação</span>
                   )}
@@ -629,10 +652,10 @@ export default function EspacosPage({ user }: EspacosPageProps) {
               )}
             </div>
 
-            {/* Horizontal photo gallery with subtle gray custom scrollbar */}
+            {/* Horizontal photo gallery (Fonte aumentada) */}
             {selectedEspaco.mediaItems && selectedEspaco.mediaItems.length > 1 && (
-              <div className="border-t border-slate-200 dark:border-slate-800 p-4">
-                <h4 className="font-display text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+              <div className="border-t border-slate-200 dark:border-slate-800 p-5">
+                <h4 className="font-display text-sm uppercase tracking-wider text-slate-900 dark:text-white mb-3">
                   Galeria de Fotos
                 </h4>
                 <div className="flex gap-3 overflow-x-auto pb-3 gallery-scroll">
@@ -703,7 +726,7 @@ export default function EspacosPage({ user }: EspacosPageProps) {
 
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <h3 className="font-display text-sm uppercase text-slate-500 tracking-wider">Atributos Físicos</h3>
+                    <h3 className="font-display text-sm uppercase text-slate-500 tracking-wider">Infraestrutura</h3>
                     <div className="grid grid-cols-2 gap-4 bg-slate-100/50 dark:bg-slate-800/50 p-4 rounded-sm border border-slate-200 dark:border-slate-700">
                       <ToggleSwitch checked={cobertura} label="Cobertura" onChange={() => setCobertura(!cobertura)} />
                       <ToggleSwitch checked={iluminacao} label="Iluminação" onChange={() => setIluminacao(!iluminacao)} />
@@ -721,14 +744,28 @@ export default function EspacosPage({ user }: EspacosPageProps) {
                     </div>
                   </div>
 
+                  {/* Upload de Fotos do Computador */}
                   <div className="space-y-3">
-                    <h3 className="font-display text-sm uppercase text-slate-500 tracking-wider">Galeria de Fotos (URL)</h3>
-                    <div className="flex gap-2">
-                      <TextInput placeholder="https://exemplo.com/foto.jpg" value={mediaUrlInput} onChange={(e) => setMediaUrlInput(e.target.value)} className="flex-1" />
-                      <TextInput placeholder="Legenda (opcional)" value={mediaCaptionInput} onChange={(e) => setMediaCaptionInput(e.target.value)} className="flex-1" />
-                      <button type="button" onClick={handleAddMedia} className="bg-[#1b1cbb] hover:bg-[#15169a] text-white font-display text-base tracking-wider uppercase rounded-sm px-3 py-1.5 transition-colors cursor-pointer">
-                        Adicionar
-                      </button>
+                    <h3 className="font-display text-base uppercase text-slate-900 dark:text-white tracking-wider font-bold">
+                      Galeria de Fotos
+                    </h3>
+                    
+                    <div className="flex flex-col gap-3">
+                      {/* Botão de Upload do Dispositivo */}
+                      <label className="flex items-center justify-center gap-2 bg-[#e76e3c] hover:bg-[#d65d2b] text-white font-display text-base tracking-wider uppercase rounded-sm px-4 py-3 cursor-pointer transition-colors text-center w-full shadow-md">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        <span>ESCOLHER FOTOS DO COMPUTADOR</span>
+                        <input type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" />
+                      </label>
+                      
+                      <TextInput
+                        placeholder="Legenda para a foto (opcional)"
+                        value={mediaCaptionInput}
+                        onChange={(e) => setMediaCaptionInput(e.target.value)}
+                        className="text-xs"
+                      />
                     </div>
                   </div>
 
