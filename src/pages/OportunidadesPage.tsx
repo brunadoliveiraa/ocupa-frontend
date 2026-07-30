@@ -26,6 +26,10 @@ export default function OportunidadesPage({ user }: OportunidadesPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [detailOportunidade, setDetailOportunidade] = useState<any | null>(null);
 
+  // Lightbox / Image Zoom state
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string } | null>(null);
+  const [isZoomed, setIsZoomed] = useState(false);
+
   useEffect(() => {
     fetchOportunidades();
   }, []);
@@ -262,23 +266,31 @@ export default function OportunidadesPage({ user }: OportunidadesPageProps) {
                 >
                   <div className="space-y-4">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-display text-xs px-2 py-0.5 rounded bg-[#e76e3c] text-white uppercase tracking-wider">
+                      <span className="font-display text-xs px-2 py-0.5 rounded border border-ocupa text-ocupa uppercase tracking-wider">
                         {item.tipo || "Edital"}
                       </span>
                       
                       {daysLeft !== null && daysLeft >= 0 ? (
-                        <span className={`font-display text-xs px-2 py-0.5 rounded uppercase tracking-wider text-white ${daysLeft <= 5 ? "bg-red-600" : "bg-blue-900"}`}>
+                        <span className={`font-display text-xs px-2 py-0.5 rounded uppercase tracking-wider border ${daysLeft <= 5 ? "border-red-600 text-red-600" : "border-blue-900 text-blue-900 dark:border-blue-400 dark:text-blue-400"}`}>
                           {daysLeft} dias restantes
                         </span>
                       ) : daysLeft !== null ? (
-                        <span className="font-display text-xs px-2 py-0.5 rounded bg-slate-500 text-white uppercase tracking-wider">
+                        <span className="font-display text-xs px-2 py-0.5 rounded border border-slate-400 text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                           Encerrado
                         </span>
                       ) : null}
                     </div>
 
                     {item.fotoUrl && (
-                      <div className="h-40 w-full rounded-sm overflow-hidden border border-slate-900 dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLightboxImage({ url: item.fotoUrl, title: item.titulo });
+                          setIsZoomed(false);
+                        }}
+                        className="h-40 w-full rounded-sm overflow-hidden border border-slate-900 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 cursor-pointer hover:opacity-90 transition-opacity"
+                        title="Clique para ver a foto de capa inteira com zoom"
+                      >
                         <img src={item.fotoUrl} alt={item.titulo} className="w-full h-full object-cover" />
                       </div>
                     )}
@@ -369,7 +381,14 @@ export default function OportunidadesPage({ user }: OportunidadesPageProps) {
               {/* Body */}
               <div className="p-6 space-y-4 overflow-y-auto">
                 {detailOportunidade.fotoUrl && (
-                  <div className="h-48 w-full rounded-sm overflow-hidden border border-slate-900 dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
+                  <div
+                    onClick={() => {
+                      setLightboxImage({ url: detailOportunidade.fotoUrl, title: detailOportunidade.titulo });
+                      setIsZoomed(false);
+                    }}
+                    className="h-48 w-full rounded-sm overflow-hidden border border-slate-900 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 cursor-pointer hover:opacity-90 transition-opacity"
+                    title="Clique para ver a foto de capa inteira com zoom"
+                  >
                     <img src={detailOportunidade.fotoUrl} alt={detailOportunidade.titulo} className="w-full h-full object-cover" />
                   </div>
                 )}
@@ -421,6 +440,65 @@ export default function OportunidadesPage({ user }: OportunidadesPageProps) {
           </div>
         )}
       </div>
+      {/* Lightbox / Fullscreen Image Zoom Modal */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-[6000] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 select-none"
+          onClick={() => {
+            setLightboxImage(null);
+            setIsZoomed(false);
+          }}
+        >
+          {/* Header Controls */}
+          <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10 text-white">
+            <span className="font-display text-lg sm:text-xl tracking-wider uppercase truncate max-w-md">
+              {lightboxImage.title || "Visualização da Imagem"}
+            </span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsZoomed((prev) => !prev);
+                }}
+                className="bg-slate-800 hover:bg-slate-700 text-white text-xs uppercase font-display tracking-wider px-3 py-1.5 rounded border border-slate-600 transition-colors cursor-pointer"
+              >
+                {isZoomed ? "🔍 Normal" : "🔍 Zoom In"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLightboxImage(null);
+                  setIsZoomed(false);
+                }}
+                className="text-white hover:text-ocupa font-bold text-3xl cursor-pointer leading-none px-2"
+                aria-label="Fechar"
+              >
+                &times;
+              </button>
+            </div>
+          </div>
+
+          {/* Image Canvas Container */}
+          <div
+            className="w-full h-full flex items-center justify-center overflow-auto p-4 pt-16"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={lightboxImage.url}
+              alt={lightboxImage.title || "Imagem inteira"}
+              onClick={() => setIsZoomed((prev) => !prev)}
+              className={`transition-transform duration-300 rounded-sm shadow-2xl object-contain max-h-[85vh] cursor-pointer ${
+                isZoomed ? "scale-150 cursor-zoom-out max-h-none max-w-none" : "max-w-full cursor-zoom-in"
+              }`}
+            />
+          </div>
+
+          <p className="absolute bottom-4 text-xs text-slate-400 text-center">
+            Clique na imagem ou no botão para alternar o Zoom | Clique fora para fechar
+          </p>
+        </div>
+      )}
     </div>
   );
 }

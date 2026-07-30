@@ -315,30 +315,23 @@ export default function EventosPage({ user }: EventosPageProps) {
 
         {/* Events Grid by Selected Period */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-            <h3 className="font-display text-xl uppercase tracking-wider text-slate-900 dark:text-white">
-              Eventos de {getPeriodLabel(activePeriod) || "Todos os meses"}
-            </h3>
-            <span className="font-display text-xs px-2 py-0.5 rounded bg-[#e76e3c] text-white uppercase tracking-wider">
-              {filteredEvents.length} Evento(s)
-            </span>
-          </div>
+
 
           {filteredEvents.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredEvents.map((evento) => {
                 return (
                   <div
                     key={evento.id}
-                    className="border border-slate-900 dark:border-slate-600 rounded-sm p-4 bg-white dark:bg-slate-900 hover:border-ocupa hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+                    className="border border-slate-900 dark:border-slate-600 rounded-sm p-5 bg-white dark:bg-slate-900 hover:border-ocupa hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between space-y-4"
                   >
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {/* Cover image */}
-                      <div className="h-60 w-full rounded-sm overflow-hidden border border-slate-900 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 relative">
+                      <div className="h-40 w-full rounded-sm overflow-hidden border border-slate-900 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 relative">
                         {evento.fotoUrl ? (
                           <img src={evento.fotoUrl} alt={evento.nome} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-display text-lg text-slate-500 uppercase">
+                          <div className="w-full h-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-display text-sm text-slate-500 uppercase">
                             Sem Foto de Capa
                           </div>
                         )}
@@ -379,7 +372,7 @@ export default function EventosPage({ user }: EventosPageProps) {
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-wrap gap-2 justify-between items-center">
+                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap gap-2 justify-between items-center">
                       <button
                         onClick={() => setDetailEvent(evento)}
                         className="bg-[#e76e3c] hover:bg-[#d65d2b] text-white font-display text-sm tracking-wider uppercase rounded-sm px-3 py-1 transition-colors cursor-pointer"

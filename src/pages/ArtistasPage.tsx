@@ -20,6 +20,10 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
   const [selectedArtista, setSelectedArtista] = useState<any | null>(null);
   const [portfolio, setPortfolio] = useState<any | null>(null);
   
+  // Lightbox / Image Zoom state
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string } | null>(null);
+  const [isZoomed, setIsZoomed] = useState(false);
+  
   // Request budget modal/form states
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requesterNome, setRequesterNome] = useState(user?.nome || "");
@@ -180,7 +184,17 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
                 >
                   <div className="space-y-4">
                     <div className="flex items-start gap-4">
-                      <div className="h-16 w-16 overflow-hidden rounded-full border border-slate-900 dark:border-slate-700 bg-slate-200 dark:bg-slate-800 flex-shrink-0">
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (artista.fotoUrl) {
+                            setLightboxImage({ url: artista.fotoUrl, title: artista.nome });
+                            setIsZoomed(false);
+                          }
+                        }}
+                        className="h-16 w-16 overflow-hidden rounded-full border border-slate-900 dark:border-slate-700 bg-slate-200 dark:bg-slate-800 flex-shrink-0 cursor-pointer hover:opacity-90 hover:scale-105 transition-all group/img relative"
+                        title="Clique para ver a foto de perfil inteira"
+                      >
                         {artista.fotoUrl ? (
                           <img src={artista.fotoUrl} alt={artista.nome} className="h-full w-full object-cover" />
                         ) : (
@@ -261,7 +275,16 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
             <div className="grid gap-6 md:grid-cols-[1fr_2fr]">
               {/* Left Column: Card Detail */}
               <div className="space-y-4">
-                <div className="h-48 w-full overflow-hidden rounded-sm bg-slate-200 dark:bg-slate-800 border border-slate-900 dark:border-slate-700">
+                <div
+                  onClick={() => {
+                    if (selectedArtista.fotoUrl) {
+                      setLightboxImage({ url: selectedArtista.fotoUrl, title: selectedArtista.nome });
+                      setIsZoomed(false);
+                    }
+                  }}
+                  className="h-48 w-full overflow-hidden rounded-sm bg-slate-200 dark:bg-slate-800 border border-slate-900 dark:border-slate-700 cursor-pointer hover:opacity-90 transition-opacity"
+                  title="Clique para ver a foto de perfil inteira"
+                >
                   {selectedArtista.fotoUrl ? (
                     <img src={selectedArtista.fotoUrl} alt={selectedArtista.nome} className="h-full w-full object-cover" />
                   ) : (
@@ -321,7 +344,16 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
                         <div key={item.id} className="border border-slate-900 dark:border-slate-800 rounded-sm overflow-hidden bg-slate-100 dark:bg-slate-900">
                           <div className="h-32 bg-slate-200 dark:bg-slate-800">
                             {item.mediaType === "IMAGE" ? (
-                              <img src={item.url} alt={item.caption} className="w-full h-full object-cover" />
+                              <img
+                                src={item.url}
+                                alt={item.caption}
+                                onClick={() => {
+                                  setLightboxImage({ url: item.url, title: item.caption || selectedArtista.nome });
+                                  setIsZoomed(false);
+                                }}
+                                className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                title="Clique para ver a imagem inteira com zoom"
+                              />
                             ) : (
                               <div className="h-full w-full flex flex-col items-center justify-center p-2 text-center">
                                 <span className="font-display text-xs uppercase text-slate-500">{item.mediaType}</span>
@@ -430,6 +462,65 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
             </form>
           </ModalBody>
         </Modal>
+      )}
+      {/* Lightbox / Fullscreen Image Zoom Modal */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-[6000] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 select-none"
+          onClick={() => {
+            setLightboxImage(null);
+            setIsZoomed(false);
+          }}
+        >
+          {/* Header Controls */}
+          <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10 text-white">
+            <span className="font-display text-lg sm:text-xl tracking-wider uppercase truncate max-w-md">
+              {lightboxImage.title || "Visualização da Imagem"}
+            </span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsZoomed((prev) => !prev);
+                }}
+                className="bg-slate-800 hover:bg-slate-700 text-white text-xs uppercase font-display tracking-wider px-3 py-1.5 rounded border border-slate-600 transition-colors cursor-pointer"
+              >
+                {isZoomed ? "🔍 Normal" : "🔍 Zoom In"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLightboxImage(null);
+                  setIsZoomed(false);
+                }}
+                className="text-white hover:text-ocupa font-bold text-3xl cursor-pointer leading-none px-2"
+                aria-label="Fechar"
+              >
+                &times;
+              </button>
+            </div>
+          </div>
+
+          {/* Image Canvas Container */}
+          <div
+            className="w-full h-full flex items-center justify-center overflow-auto p-4 pt-16"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={lightboxImage.url}
+              alt={lightboxImage.title || "Imagem inteira"}
+              onClick={() => setIsZoomed((prev) => !prev)}
+              className={`transition-transform duration-300 rounded-sm shadow-2xl object-contain max-h-[85vh] cursor-pointer ${
+                isZoomed ? "scale-150 cursor-zoom-out max-h-none max-w-none" : "max-w-full cursor-zoom-in"
+              }`}
+            />
+          </div>
+
+          <p className="absolute bottom-4 text-xs text-slate-400 text-center">
+            Clique na imagem ou no botão para alternar o Zoom | Clique fora para fechar
+          </p>
+        </div>
       )}
     </div>
   );

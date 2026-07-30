@@ -409,12 +409,12 @@ export default function App() {
               <img
                 src="/logo_ocupa.svg"
                 alt="OCUPA - O território fala o Ocupa conecta"
-                className="h-10 sm:h-12 w-auto object-contain block dark:hidden"
+                className="h-14 sm:h-16 w-auto object-contain block dark:hidden"
               />
               <img
                 src="/logo_ocupa_branco.svg"
                 alt="OCUPA - O território fala o Ocupa conecta"
-                className="h-10 sm:h-12 w-auto object-contain hidden dark:block"
+                className="h-14 sm:h-16 w-auto object-contain hidden dark:block"
               />
             </NavbarBrand>
             
@@ -489,8 +489,8 @@ export default function App() {
 
       {/* ═══════ FOOTER: PAREDE GRAFITADA SANGRAMENTO SEM BORDA ═══════ */}
       <footer className="border-t border-slate-200 dark:border-slate-800 relative overflow-hidden bg-white dark:bg-slate-950 mt-16 pt-10 pb-6">
-        {/* Parede grafitada de fundo no lado esquerdo (até 38% da tela) */}
-        <div className="absolute left-0 top-0 bottom-0 w-full md:w-[38%] h-full overflow-hidden grain-overlay pointer-events-none opacity-40 md:opacity-80">
+        {/* Parede grafitada de fundo no lado esquerdo */}
+        <div className="absolute left-0 top-0 bottom-0 w-full md:w-[30%] h-full overflow-hidden grain-overlay pointer-events-none opacity-40 md:opacity-80">
           <img
             src="/footer.jpeg"
             alt="Parede grafitada"
@@ -500,35 +500,35 @@ export default function App() {
         </div>
 
         {/* Conteúdo posicionado à direita da imagem */}
-        <div className="w-full pl-4 md:pl-[40%] pr-6 sm:pr-10 lg:pr-16 relative z-10">
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-6 lg:gap-10 w-full">
+        <div className="w-full pl-4 md:pl-[32%] pr-6 sm:pr-10 lg:pr-12 relative z-10">
+          <div className="flex flex-wrap justify-between items-start gap-6 lg:gap-6 w-full">
             
-            {/* Coluna 1: Logo OCUPA + Direitos Reservados abaixo */}
-            <div className="space-y-2 max-w-[220px]">
+            {/* Coluna 1: Logo OCUPA */}
+            <div className="space-y-2 max-w-[200px]">
               <img
                 src="/logo_ocupa.svg"
                 alt="OCUPA"
-                className="h-10 sm:h-12 lg:h-20 w-auto object-contain block dark:hidden cursor-pointer"
+                className="h-14 sm:h-16 lg:h-20 w-auto object-contain block dark:hidden cursor-pointer"
                 onClick={() => navigate("home")}
               />
               <img
                 src="/logo_ocupa_branco.svg"
                 alt="OCUPA"
-                className="h-10 sm:h-12 lg:h-20 w-auto object-contain hidden dark:block cursor-pointer"
+                className="h-14 sm:h-16 lg:h-20 w-auto object-contain hidden dark:block cursor-pointer"
                 onClick={() => setRoute("home")}
               />
             </div>
 
-            {/* Coluna 2: CATÁLOGOS (Seção principal no estilo NAVEGAÇÃO) */}
+            {/* Coluna 2: CATÁLOGOS */}
             <div className="space-y-3">
-              <h3 className="font-display text-base tracking-wider uppercase text-slate-900 dark:text-white">
+              <h3 className="font-display text-lg tracking-wider uppercase text-slate-900 dark:text-white">
                 Catálogos
               </h3>
-              <ul className="space-y-1.5 text-xs">
+              <ul className="space-y-2 text-sm">
                 <li>
                   <button
                     onClick={() => navigate("artistas")}
-                    className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap"
+                    className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap font-medium"
                   >
                     Artistas
                   </button>
@@ -536,7 +536,7 @@ export default function App() {
                 <li>
                   <button
                     onClick={() => navigate("espacos")}
-                    className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap"
+                    className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap font-medium"
                   >
                     Espaços
                   </button>
@@ -544,16 +544,16 @@ export default function App() {
               </ul>
             </div>
 
-            {/* Coluna 3: NOVIDADES (Seção principal no estilo NAVEGAÇÃO) */}
+            {/* Coluna 3: NOVIDADES */}
             <div className="space-y-3">
-              <h3 className="font-display text-base tracking-wider uppercase text-slate-900 dark:text-white">
+              <h3 className="font-display text-lg tracking-wider uppercase text-slate-900 dark:text-white">
                 Novidades
               </h3>
-              <ul className="space-y-1.5 text-xs">
+              <ul className="space-y-2 text-sm">
                 <li>
                   <button
                     onClick={() => navigate("eventos")}
-                    className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap"
+                    className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap font-medium"
                   >
                     Agenda
                   </button>
@@ -561,7 +561,7 @@ export default function App() {
                 <li>
                   <button
                     onClick={() => navigate("oportunidades")}
-                    className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap"
+                    className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-ocupa dark:hover:text-ocupa transition-colors whitespace-nowrap font-medium"
                   >
                     Oportunidades
                   </button>
@@ -569,46 +569,64 @@ export default function App() {
               </ul>
             </div>
 
-            {/* Coluna 4: COMPROMISSO ODS */}
+            {/* Coluna 4: CONTATO */}
             <div className="space-y-3">
-              <h3 className="font-display text-base tracking-wider uppercase text-slate-900 dark:text-white">
-                Compromisso ODS
+              <h3 className="font-display text-lg tracking-wider uppercase text-slate-900 dark:text-white">
+                Contato
               </h3>
-              <div className="space-y-2">
-                <a
-                  href="https://brasil.un.org/pt-br/sdgs/8"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 hover:text-ocupa dark:hover:text-ocupa transition-colors group whitespace-nowrap"
-                >
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-[#A21942] flex-shrink-0 group-hover:scale-105 transition-transform">
-                    ODS 8
-                  </span>
-                  <span>Trabalho Decente</span>
+              <div className="space-y-2.5 text-sm text-slate-600 dark:text-slate-400 font-medium">
+                <a href="mailto:contato@ocupa.cultura.br" className="flex items-center gap-2.5 hover:text-ocupa transition-colors">
+                  <svg className="w-4 h-4 text-ocupa flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span>contato@ocupa.cultura.br</span>
                 </a>
-                <a
-                  href="https://brasil.un.org/pt-br/sdgs/10"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 hover:text-ocupa dark:hover:text-ocupa transition-colors group whitespace-nowrap"
-                >
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-[#DD1367] flex-shrink-0 group-hover:scale-105 transition-transform">
-                    ODS 10
-                  </span>
-                  <span>Redução de Desigualdades</span>
+                <a href="tel:21999999999" className="flex items-center gap-2.5 hover:text-ocupa transition-colors">
+                  <svg className="w-4 h-4 text-ocupa flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  <span>(21) 99999-9999</span>
                 </a>
-                <a
-                  href="https://brasil.un.org/pt-br/sdgs/11"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 hover:text-ocupa dark:hover:text-ocupa transition-colors group whitespace-nowrap"
-                >
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-[#FD9D24] flex-shrink-0 group-hover:scale-105 transition-transform">
-                    ODS 11
-                  </span>
-                  <span>Cidades Sustentáveis</span>
-                </a>
+                <div className="flex items-center gap-2.5">
+                  <svg className="w-4 h-4 text-ocupa flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>Rio de Janeiro, RJ</span>
+                </div>
               </div>
+            </div>
+
+            {/* Coluna 5: FIQUE POR DENTRO */}
+            <div className="space-y-3 max-w-xs">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-ocupa flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <h3 className="font-display text-lg tracking-wider uppercase text-slate-900 dark:text-white">
+                  Fique por Dentro
+                </h3>
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                Receba novidades, oportunidades e conteúdos sobre cultura e território.
+              </p>
+              <form onSubmit={(e) => { e.preventDefault(); alert("Obrigado por se inscrever!"); }} className="flex items-center pt-1">
+                <input
+                  type="email"
+                  placeholder="Seu e-mail"
+                  required
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-900 dark:border-slate-700 rounded-l-sm px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-ocupa placeholder-slate-400"
+                />
+                <button
+                  type="submit"
+                  aria-label="Inscrever-se"
+                  className="bg-[#e76e3c] hover:bg-[#d65d2b] text-white px-4 py-2 rounded-r-sm transition-colors cursor-pointer flex items-center justify-center border border-l-0 border-[#e76e3c]"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </button>
+              </form>
             </div>
 
           </div>

@@ -11,6 +11,10 @@ export default function EspacosPage({ user }: EspacosPageProps) {
   const [espacos, setEspacos] = useState<any[]>([]);
   const [selectedEspaco, setSelectedEspaco] = useState<any | null>(null);
   const [showForm, setShowForm] = useState(false);
+  
+  // Lightbox / Image Zoom & Carousel state
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [isZoomed, setIsZoomed] = useState(false);
   const [isSelectingLocation, setIsSelectingLocationState] = useState(false);
   const isSelectingLocationRef = useRef(false);
 
@@ -94,6 +98,41 @@ export default function EspacosPage({ user }: EspacosPageProps) {
       else setSelectedEspaco(null);
     }
   }, [espacos]);
+
+  /* ═══════ LIGHTBOX CAROUSEL HELPERS & KEYBOARD NAV ═══════ */
+  function handlePrevImage(e?: React.MouseEvent) {
+    if (e) e.stopPropagation();
+    if (lightboxIndex !== null && selectedEspaco?.mediaItems?.length) {
+      if (lightboxIndex > 0) {
+        setLightboxIndex((prev) => (prev !== null ? prev - 1 : 0));
+        setIsZoomed(false);
+      }
+    }
+  }
+
+  function handleNextImage(e?: React.MouseEvent) {
+    if (e) e.stopPropagation();
+    if (lightboxIndex !== null && selectedEspaco?.mediaItems?.length) {
+      if (lightboxIndex < selectedEspaco.mediaItems.length - 1) {
+        setLightboxIndex((prev) => (prev !== null ? prev + 1 : 0));
+        setIsZoomed(false);
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") handlePrevImage();
+      else if (e.key === "ArrowRight") handleNextImage();
+      else if (e.key === "Escape") {
+        setLightboxIndex(null);
+        setIsZoomed(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxIndex, selectedEspaco]);
 
   /* ═══════ MAP INIT ═══════ */
   useEffect(() => {
@@ -558,7 +597,14 @@ export default function EspacosPage({ user }: EspacosPageProps) {
 
             {/* Cover photo */}
             {selectedEspaco.mediaItems?.[0]?.url ? (
-              <div className="relative h-[280px] w-full overflow-hidden">
+              <div
+                onClick={() => {
+                  setLightboxIndex(0);
+                  setIsZoomed(false);
+                }}
+                className="relative h-[280px] w-full overflow-hidden cursor-pointer hover:opacity-95 transition-opacity"
+                title="Clique para ver a foto de capa inteira com zoom"
+              >
                 <img
                   src={selectedEspaco.mediaItems[0].url}
                   alt={selectedEspaco.nome}
@@ -589,6 +635,30 @@ export default function EspacosPage({ user }: EspacosPageProps) {
                   {selectedEspaco.endereco || "Endereço não cadastrado"}
                 </p>
               </div>
+
+              {/* Horizontal photo gallery (logo abaixo do endereço) */}
+              {selectedEspaco.mediaItems && selectedEspaco.mediaItems.length > 1 && (
+                <div className="pt-1 border-t border-slate-200 dark:border-slate-800">
+                  <h4 className="font-display text-sm uppercase tracking-wider text-slate-900 dark:text-white mb-2 pt-2">
+                    Galeria de Fotos
+                  </h4>
+                  <div className="flex gap-3 overflow-x-auto pb-2 gallery-scroll">
+                    {selectedEspaco.mediaItems.slice(1).map((media: any, idx: number) => (
+                      <div
+                        key={media.id || idx}
+                        onClick={() => {
+                          setLightboxIndex(idx + 1);
+                          setIsZoomed(false);
+                        }}
+                        className="flex-shrink-0 w-[140px] h-[100px] rounded-sm overflow-hidden border border-slate-900 dark:border-slate-700 hover:border-[#e76e3c] transition-colors cursor-pointer"
+                        title="Clique para ver a foto inteira com zoom"
+                      >
+                        <img src={media.url} alt={media.caption || ""} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Capacity badge (Fonte aumentada) */}
               <div className="flex items-center gap-2">
@@ -651,25 +721,6 @@ export default function EspacosPage({ user }: EspacosPageProps) {
                 </div>
               )}
             </div>
-
-            {/* Horizontal photo gallery (Fonte aumentada) */}
-            {selectedEspaco.mediaItems && selectedEspaco.mediaItems.length > 1 && (
-              <div className="border-t border-slate-200 dark:border-slate-800 p-5">
-                <h4 className="font-display text-sm uppercase tracking-wider text-slate-900 dark:text-white mb-3">
-                  Galeria de Fotos
-                </h4>
-                <div className="flex gap-3 overflow-x-auto pb-3 gallery-scroll">
-                  {selectedEspaco.mediaItems.slice(1).map((media: any, idx: number) => (
-                    <div
-                      key={media.id || idx}
-                      className="flex-shrink-0 w-[150px] h-[110px] rounded-sm overflow-hidden border border-slate-900 dark:border-slate-700 hover:border-[#e76e3c] transition-colors"
-                    >
-                      <img src={media.url} alt={media.caption || ""} className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -713,11 +764,11 @@ export default function EspacosPage({ user }: EspacosPageProps) {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="latitude">Latitude (Travada no Mapa)</Label>
+                      <Label htmlFor="latitude">Latitude</Label>
                       <TextInput id="latitude" value={latitude} readOnly disabled className="bg-slate-100 dark:bg-slate-800 cursor-not-allowed opacity-75 font-mono text-xs" />
                     </div>
                     <div>
-                      <Label htmlFor="longitude">Longitude (Travada no Mapa)</Label>
+                      <Label htmlFor="longitude">Longitude</Label>
                       <TextInput id="longitude" value={longitude} readOnly disabled className="bg-slate-100 dark:bg-slate-800 cursor-not-allowed opacity-75 font-mono text-xs" />
                     </div>
                   </div>
@@ -814,6 +865,98 @@ export default function EspacosPage({ user }: EspacosPageProps) {
           </div>
         )}
       </div>
+
+      {/* Lightbox / Fullscreen Image Zoom Modal with Carousel */}
+      {lightboxIndex !== null && selectedEspaco?.mediaItems?.[lightboxIndex] && (
+        <div
+          className="fixed inset-0 z-[6000] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 select-none"
+          onClick={() => {
+            setLightboxIndex(null);
+            setIsZoomed(false);
+          }}
+        >
+          {/* Header Controls */}
+          <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10 text-white">
+            <div className="flex items-center gap-3 truncate max-w-md">
+              <span className="font-display text-xs px-2.5 py-1 rounded bg-[#e76e3c] text-white uppercase tracking-wider flex-shrink-0">
+                {lightboxIndex + 1} / {selectedEspaco.mediaItems.length}
+              </span>
+              <span className="font-display text-lg sm:text-xl tracking-wider uppercase truncate">
+                {selectedEspaco.mediaItems[lightboxIndex].caption || selectedEspaco.nome}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsZoomed((prev) => !prev);
+                }}
+                className="bg-slate-800 hover:bg-slate-700 text-white text-xs uppercase font-display tracking-wider px-3 py-1.5 rounded border border-slate-600 transition-colors cursor-pointer"
+              >
+                {isZoomed ? "🔍 Normal" : "🔍 Zoom In"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLightboxIndex(null);
+                  setIsZoomed(false);
+                }}
+                className="text-white hover:text-ocupa font-bold text-3xl cursor-pointer leading-none px-2"
+                aria-label="Fechar"
+              >
+                &times;
+              </button>
+            </div>
+          </div>
+
+          {/* Left Arrow Button */}
+          {selectedEspaco.mediaItems.length > 1 && lightboxIndex > 0 && (
+            <button
+              type="button"
+              onClick={handlePrevImage}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-slate-900/80 hover:bg-[#e76e3c] text-white w-12 h-12 rounded-full flex items-center justify-center text-2xl border border-slate-600 transition-all cursor-pointer shadow-lg hover:scale-110"
+              aria-label="Foto anterior"
+              title="Foto anterior (Seta para a esquerda)"
+            >
+              &#10094;
+            </button>
+          )}
+
+          {/* Right Arrow Button */}
+          {selectedEspaco.mediaItems.length > 1 && lightboxIndex < selectedEspaco.mediaItems.length - 1 && (
+            <button
+              type="button"
+              onClick={handleNextImage}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-slate-900/80 hover:bg-[#e76e3c] text-white w-12 h-12 rounded-full flex items-center justify-center text-2xl border border-slate-600 transition-all cursor-pointer shadow-lg hover:scale-110"
+              aria-label="Próxima foto"
+              title="Próxima foto (Seta para a direita)"
+            >
+              &#10095;
+            </button>
+          )}
+
+          {/* Image Canvas Container */}
+          <div
+            className="w-full h-full flex items-center justify-center overflow-auto p-4 pt-16 pb-12"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={selectedEspaco.mediaItems[lightboxIndex].url}
+              alt={selectedEspaco.mediaItems[lightboxIndex].caption || selectedEspaco.nome}
+              onClick={() => setIsZoomed((prev) => !prev)}
+              className={`transition-transform duration-300 rounded-sm shadow-2xl object-contain max-h-[85vh] cursor-pointer ${
+                isZoomed ? "scale-150 cursor-zoom-out max-h-none max-w-none" : "max-w-full cursor-zoom-in"
+              }`}
+            />
+          </div>
+
+          <p className="absolute bottom-4 text-xs text-slate-400 text-center">
+            Use as setas laterais (ou setas ◄ ► do teclado) para navegar | Clique para dar Zoom
+          </p>
+        </div>
+      )}
     </>
   );
 }
