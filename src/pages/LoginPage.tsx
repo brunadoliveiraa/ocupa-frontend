@@ -31,7 +31,6 @@ export default function LoginPage({ onLoginSuccess, onNavigateToRegister }: Logi
         return;
       }
 
-      window.localStorage.setItem("ocupaUser", JSON.stringify(body));
       onLoginSuccess(body);
     } catch (err) {
       setError("Não foi possível conectar ao servidor");

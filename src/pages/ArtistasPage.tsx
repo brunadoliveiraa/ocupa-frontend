@@ -1,4 +1,4 @@
-import { Alert, Badge, Label, Modal, ModalHeader, ModalBody, ModalFooter, TextInput, Textarea, CustomFlowbiteTheme } from "flowbite-react";
+import { Alert, Badge, Label, Modal, ModalHeader, ModalBody, ModalFooter, TextInput, Textarea } from "flowbite-react";
 import { useEffect, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
@@ -6,12 +6,6 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 interface ArtistasPageProps {
   user?: any;
 }
-
-const customModalTheme: CustomFlowbiteTheme["modal"] = {
-  root: {
-    base: "fixed inset-x-0 top-0 z-[5010] h-screen overflow-y-auto overflow-x-hidden md:inset-0 md:h-full",
-  }
-};
 
 export default function ArtistasPage({ user }: ArtistasPageProps) {
   const [artistas, setArtistas] = useState<any[]>([]);
@@ -155,7 +149,7 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
               Contrate Talentos
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed">
-              Catálogo de artistas, prestadores de serviços e empreendedores criativos locais.
+              Catálogo de artistas, prestadores de serviços e talentos criativos locais.
             </p>
           </div>
           
@@ -260,7 +254,7 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
 
       {/* Profile/Portfolio Detail Modal */}
       {selectedArtista && (
-        <Modal show={selectedArtista !== null && !showRequestModal} onClose={() => setSelectedArtista(null)} size="4xl" theme={customModalTheme}>
+        <Modal show={selectedArtista !== null && !showRequestModal} onClose={() => setSelectedArtista(null)} size="4xl">
           <ModalHeader>
             <div className="flex items-center gap-3">
               <span className="font-display text-2xl uppercase tracking-wider text-slate-900 dark:text-white">
@@ -399,7 +393,7 @@ export default function ArtistasPage({ user }: ArtistasPageProps) {
 
       {/* Solicitar Orçamento Modal */}
       {selectedArtista && showRequestModal && (
-        <Modal show={showRequestModal} onClose={() => setShowRequestModal(false)} size="md" theme={customModalTheme}>
+        <Modal show={showRequestModal} onClose={() => setShowRequestModal(false)} size="md">
           <ModalHeader>
             <span className="font-display text-2xl uppercase tracking-wider">
               Solicitar Orçamento a {selectedArtista.nome}

@@ -1,5 +1,6 @@
-import { Alert, Badge, Label, Select, TextInput } from "flowbite-react";
+import { Alert, Label, Select, TextInput } from "flowbite-react";
 import { useEffect, useState } from "react";
+import { authFetch } from "../App";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -95,7 +96,7 @@ export default function OportunidadesPage({ user }: OportunidadesPageProps) {
       const url = isEditing ? `${API_URL}/api/oportunidades/${selectedId}` : `${API_URL}/api/oportunidades`;
       const method = isEditing ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await authFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -113,7 +114,7 @@ export default function OportunidadesPage({ user }: OportunidadesPageProps) {
   async function handleDelete(id: number) {
     if (!confirm("Tem certeza que deseja remover esta oportunidade?")) return;
     try {
-      const res = await fetch(`${API_URL}/api/oportunidades/${id}`, { method: "DELETE" });
+      const res = await authFetch(`${API_URL}/api/oportunidades/${id}`, { method: "DELETE" });
       if (res.ok) {
         fetchOportunidades();
       }

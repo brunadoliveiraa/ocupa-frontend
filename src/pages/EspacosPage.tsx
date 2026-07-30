@@ -1,5 +1,6 @@
 import { Alert, Label, TextInput, ToggleSwitch } from "flowbite-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { authFetch } from "../App";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -59,7 +60,7 @@ export default function EspacosPage({ user }: EspacosPageProps) {
   const [permiteBatalha, setPermiteBatalha] = useState(false);
   const [permiteDanca, setPermiteDanca] = useState(false);
   const [mediaList, setMediaList] = useState<{ url: string; caption: string }[]>([]);
-  const [mediaUrlInput, setMediaUrlInput] = useState("");
+  const [_mediaUrlInput, setMediaUrlInput] = useState("");
   const [mediaCaptionInput, setMediaCaptionInput] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -323,20 +324,15 @@ export default function EspacosPage({ user }: EspacosPageProps) {
         const base64String = reader.result as string;
         setMediaList((prev) => [
           ...prev,
-          { url: base64String, caption: mediaCaptionInput || file.name },
+          { url: base64String, caption: file.name },
         ]);
-        setMediaCaptionInput("");
       };
       reader.readAsDataURL(file);
     });
     e.target.value = "";
   }
 
-  function handleAddMedia() {
-    if (!mediaUrlInput) return;
-    setMediaList([...mediaList, { url: mediaUrlInput, caption: mediaCaptionInput }]);
-    setMediaUrlInput(""); setMediaCaptionInput("");
-  }
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setError(null);
@@ -349,7 +345,7 @@ export default function EspacosPage({ user }: EspacosPageProps) {
     };
     try {
       const url = isEditing ? `${API_URL}/api/espacos/${selectedId}` : `${API_URL}/api/espacos`;
-      const res = await fetch(url, {
+      const res = await authFetch(url, {
         method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -362,9 +358,9 @@ export default function EspacosPage({ user }: EspacosPageProps) {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm("Tem certeza que deseja remover este espaço?")) return;
+    if (!confirm("Tem certeza que deseja deletar este espaço?")) return;
     try {
-      const res = await fetch(`${API_URL}/api/espacos/${id}`, { method: "DELETE" });
+      const res = await authFetch(`${API_URL}/api/espacos/${id}`, { method: "DELETE" });
       if (res.ok) fetchEspacos();
     } catch (err) { console.error("Erro ao deletar espaço:", err); }
   }

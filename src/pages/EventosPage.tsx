@@ -1,5 +1,6 @@
 import { Alert, Label, Select, TextInput } from "flowbite-react";
 import { useEffect, useState } from "react";
+import { authFetch } from "../App";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -122,7 +123,7 @@ export default function EventosPage({ user }: EventosPageProps) {
       const url = isEditing ? `${API_URL}/api/eventos/${selectedId}` : `${API_URL}/api/eventos`;
       const method = isEditing ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await authFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -138,9 +139,9 @@ export default function EventosPage({ user }: EventosPageProps) {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm("Tem certeza que deseja remover este evento da agenda?")) return;
+    if (!confirm("Tem certeza que deseja remover este evento?")) return;
     try {
-      const res = await fetch(`${API_URL}/api/eventos/${id}`, { method: "DELETE" });
+      const res = await authFetch(`${API_URL}/api/eventos/${id}`, { method: "DELETE" });
       if (res.ok) {
         fetchData();
       }

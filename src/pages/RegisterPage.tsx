@@ -13,7 +13,7 @@ export default function RegisterPage({ onRegisterSuccess, onNavigateToLogin }: R
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [categoria, setCategoria] = useState("");
+  const [role, setRole] = useState("ARTISTA");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -22,13 +22,11 @@ export default function RegisterPage({ onRegisterSuccess, onNavigateToLogin }: R
     setError(null);
     setSuccess(null);
 
-    // Todo cadastrado no Ocupa é Artista/Empreendedor periférico
     const payload = {
       nome,
       email,
       senha,
-      role: "ARTISTA",
-      categoria
+      role
     };
 
     try {
@@ -44,11 +42,18 @@ export default function RegisterPage({ onRegisterSuccess, onNavigateToLogin }: R
         return;
       }
 
-      setSuccess("Cadastro realizado com sucesso! Redirecionando para login...");
+      if (body.token) localStorage.setItem('ocupaToken', body.token);
+      if (body.user) localStorage.setItem('ocupaUser', JSON.stringify(body.user));
+
+      if (role === 'ARTISTA') {
+        setSuccess("Seu perfil será analisado pela curadoria do OCUPA antes de ficar público. Redirecionando...");
+      } else {
+        setSuccess("Cadastro realizado! Acesse o Painel para começar a contribuir. Redirecionando...");
+      }
+
       setNome("");
       setEmail("");
       setSenha("");
-      setCategoria("");
       
       setTimeout(() => {
         onRegisterSuccess();
@@ -67,8 +72,25 @@ export default function RegisterPage({ onRegisterSuccess, onNavigateToLogin }: R
               Criar Conta OCUPA
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-              Cadastre seu perfil para interagir e/ou empreender com a rede periférica.
+              Escolha seu perfil para interagir e fortalecer a rede periférica.
             </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div 
+              onClick={() => setRole("ARTISTA")} 
+              className={`p-4 border rounded-sm cursor-pointer transition-all ${role === "ARTISTA" ? "border-[#e76e3c] bg-[#e76e3c]/10 ring-1 ring-[#e76e3c]" : "border-slate-300 dark:border-slate-700 hover:border-[#e76e3c]"}`}
+            >
+              <h3 className="font-display text-xl uppercase text-slate-900 dark:text-white mb-1">🎨 Sou Artista</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Quero divulgar meu trabalho, criar meu portfólio e receber orçamentos</p>
+            </div>
+            <div 
+              onClick={() => setRole("COLABORADOR")} 
+              className={`p-4 border rounded-sm cursor-pointer transition-all ${role === "COLABORADOR" ? "border-[#e76e3c] bg-[#e76e3c]/10 ring-1 ring-[#e76e3c]" : "border-slate-300 dark:border-slate-700 hover:border-[#e76e3c]"}`}
+            >
+              <h3 className="font-display text-xl uppercase text-slate-900 dark:text-white mb-1">🤝 Sou Colaborador do Território</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Quero mapear espaços, sugerir eventos e oportunidades</p>
+            </div>
           </div>
 
           <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
@@ -126,17 +148,6 @@ export default function RegisterPage({ onRegisterSuccess, onNavigateToLogin }: R
                   )}
                 </button>
               </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="categoria">Sua Categoria de Atuação Principal</Label>
-              <TextInput
-                id="categoria"
-                placeholder="Ex: Grafite, Rap, Produção, DJ, Teatro..."
-                value={categoria}
-                onChange={(event) => setCategoria(event.currentTarget.value)}
-                required
-              />
             </div>
             
             {error && (

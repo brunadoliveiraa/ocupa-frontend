@@ -18,6 +18,7 @@ const ROUTE_TO_PATH: Record<string, string> = {
   painel: "/painel",
   login: "/login",
   register: "/cadastrar",
+  moderacao: "/moderacao",
 };
 
 function pathToRoute(pathname: string): string {
@@ -34,8 +35,21 @@ import LoginPage from "./pages/LoginPage";
 import OportunidadesPage from "./pages/OportunidadesPage";
 import PainelPage from "./pages/PainelPage";
 import RegisterPage from "./pages/RegisterPage";
+import ModeracaoPage from "./pages/ModeracaoPage";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
+export const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  const token = localStorage.getItem('ocupaToken');
+  const headers = new Headers(options.headers || {});
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
+  return fetch(url, { ...options, headers });
+};
 
 function EcossistemasTooltip() {
   const [isOpen, setIsOpen] = useState(false);
@@ -171,11 +185,15 @@ export default function App() {
         return <OportunidadesPage user={user} />;
       case "painel":
         return <PainelPage user={user} />;
+      case "moderacao":
+        return user?.role === 'ADMIN' ? <ModeracaoPage user={user} authFetch={authFetch} /> : <main>Acesso negado</main>;
       case "login":
         return (
           <LoginPage
-            onLoginSuccess={(u) => {
-              setUser(u);
+            onLoginSuccess={(response) => {
+              window.localStorage.setItem('ocupaToken', response.token);
+              window.localStorage.setItem('ocupaUser', JSON.stringify(response.user));
+              setUser(response.user);
               navigate("painel");
             }}
             onNavigateToRegister={() => navigate("register")}
@@ -349,7 +367,7 @@ export default function App() {
                       <EcossistemasTooltip />
                     </p>
                     <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
-                      Reunimos várias funcionalidades (que hoje estão dispersas em diferentes sistemas) para facilitar a produção, organização e divulgação da arte. Aqui você encontra ferramentas de orçamento, mensagens, divulgação de oportunidades, lista de espaços para intervenções artísticas, agenda de eventos, portfólio profissional e painel do empreendedor com registro de acessos, contatos, propostas de trabalho, participações em eventos e muito mais.
+                      Reunimos várias funcionalidades (que hoje estão dispersas em diferentes sistemas) para facilitar a produção, organização e divulgação da arte. Aqui você encontra ferramentas de orçamento, mensagens, divulgação de oportunidades, lista de espaços para intervenções artísticas, agenda de eventos, portfólio profissional e painel do artista com registro de acessos, contatos, propostas de trabalho, participações em eventos e muito mais.
                     </p>
                     <hr className="border-slate-300 dark:border-slate-700 mt-4" />
                   </div>
@@ -430,8 +448,19 @@ export default function App() {
                   >
                     Painel
                   </button>
+                  {user?.role === 'ADMIN' && (
+                    <button
+                      onClick={() => navigate("moderacao")}
+                      className={`font-display text-base sm:text-lg tracking-widest uppercase transition-colors cursor-pointer flex items-center gap-2 ${
+                        route === "moderacao" ? "text-ocupa font-bold" : "text-slate-900 dark:text-white hover:text-ocupa"
+                      }`}
+                    >
+                      Moderação
+                    </button>
+                  )}
                   <button
                     onClick={() => {
+                      window.localStorage.removeItem("ocupaToken");
                       window.localStorage.removeItem("ocupaUser");
                       setUser(null);
                       navigate("home");

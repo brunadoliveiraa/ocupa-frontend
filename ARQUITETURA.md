@@ -8,10 +8,10 @@ Esta documentação descreve a arquitetura geral do ecossistema **OCUPA** (solu�
 
 O **OCUPA** é um ecossistema projetado para mapear, conectar e monetizar a produção artística periférica. O projeto é estruturado em uma arquitetura de duas camadas desacopladas (Frontend e Backend) que se integram via APIs RESTful baseadas em JSON.
 
-- **Backend (API REST)**: Desenvolvido em Java com Spring Boot, Spring Security e Spring Data JPA. Gerencia as regras de negócio, persistência no banco de dados relacional e controle de acesso.
+- **Backend (API REST)**: Desenvolvido em Java com Spring Boot, Spring Security (Autenticação via JWT) e Spring Data JPA. Gerencia as regras de negócio, persistência no banco de dados relacional e controle de acesso baseado em papéis (Roles).
 - **Frontend (Interface Web)**: Desenvolvido em React + Vite utilizando TypeScript e componentes UI da biblioteca **Flowbite React** baseada em Tailwind CSS.
 - **Mapeamento Afetivo**: Mapas dinâmicos alimentados pela biblioteca **Leaflet** renderizados inteiramente no lado do cliente.
-- **Banco de Dados**: MySQL para persistência e armazenamento das tabelas relacionais de negócios e analytics.
+- **Banco de Dados**: MySQL para persistência e armazenamento das tabelas relacionais de negócios, logs de auditoria e status de moderação.
 
 ---
 
@@ -39,12 +39,13 @@ O backend é estruturado sob o padrão arquitetural MVC (focado em REST APIs) di
 
 ### 2.2 Frontend (React + TypeScript + Flowbite)
 O frontend adota uma abordagem de componente único com roteamento controlado por estado interno no React para navegação fluida de abas:
-- **`App.tsx` (Núcleo da Aplicação)**: Gerencia o estado de sessão de usuário logado (armazenado no `localStorage`) e controla o rendering das páginas.
+- **`App.tsx` (Núcleo da Aplicação)**: Gerencia o estado de sessão de usuário logado via **JWT (JSON Web Token)** (armazenado no `localStorage`) e controla o rendering das rotas protegidas.
 - **Páginas Principais**:
-  - `LoginPage` / `RegisterPage`: Controle de autenticação integrado com a API.
+  - `LoginPage` / `RegisterPage`: Controle de autenticação integrado com a API (retornando e enviando JWT no header `Authorization`).
   - `ArtistasPage`: Dashboard público de busca de talentos por filtros dinâmicos, formulário de contato de contratação e gatilho de estatísticas.
-  - `PainelPage`: Painel exclusivo para o artista logado ver suas métricas de analytics (visualizações de perfil, cliques em contatos), atualizar seu portfólio rico (headline, biografia, galeria de imagens/mídias) e gerenciar propostas de orçamentos recebidas.
-  - `EspacosPage`: Listagem de espaços, mapa georreferenciado interativo e formulário de mapeamento com seleção automática de coordenadas ao clicar no mapa.
+  - `PainelPage`: Painel dinâmico baseado na *Role* do usuário (`ARTISTA`, `COLABORADOR` ou `ADMIN`), exibindo métricas, gerenciamento de portfólio, status de moderação e as contribuições (espaços e eventos mapeados).
+  - `ModeracaoPage`: Área exclusiva para o administrador (`ADMIN`) aprovar ou rejeitar (com motivo) o conteúdo pendente (artistas, espaços, eventos, oportunidades).
+  - `EspacosPage`: Listagem de espaços públicos aprovados, mapa georreferenciado e formulário de mapeamento.
   - `EventosPage`: Agenda cultural de apresentações ordenadas por data de realização.
   - `OportunidadesPage`: Vagas e editais culturais categorizados.
 
@@ -75,6 +76,8 @@ erDiagram
         string foto_url
         double latitude
         double longitude
+        string status
+        string motivo_rejeicao
     }
     PORTFOLIO {
         int id PK
@@ -106,6 +109,8 @@ erDiagram
         double latitude
         double longitude
         string criado_por_email
+        string status
+        string motivo_rejeicao
     }
     EVENTO {
         int id PK
@@ -120,6 +125,8 @@ erDiagram
         double latitude
         double longitude
         string criado_por_email
+        string status
+        string motivo_rejeicao
     }
     OPORTUNIDADE {
         int id PK
@@ -132,6 +139,8 @@ erDiagram
         string inscricao_link
         string contato
         string criado_por_email
+        string status
+        string motivo_rejeicao
     }
     REQUESTS {
         int id PK
@@ -163,13 +172,16 @@ erDiagram
 
 ## 4. Controle de Acesso e Regras de Negócio
 
-Para promover a segurança do ecossistema e assegurar a governança dos dados, foram estabelecidas as seguintes regras no frontend integradas ao payload enviado ao backend:
+Para promover a segurança do ecossistema e assegurar a governança dos dados, foram estabelecidas as seguintes regras no frontend integradas ao JWT backend:
 
-1. **Modo Somente Leitura (Visitante)**: Usuários que não efetuaram login podem navegar livremente pelo ecossistema, ver artistas, editais, eventos e espaços mapeados, mas não veem opções para criar novos registros ou editá-los.
-2. **Criação de Ativos**: É obrigatório estar logado para cadastrar novos Espaços, criar Eventos na Agenda ou publicar novas Oportunidades. Ao salvar, a aplicação vincula automaticamente o e-mail do autor ao atributo `criadoPorEmail`.
-3. **Edição e Exclusão Restrita**: As ações de Editar e Excluir sobre Espaços, Eventos e Oportunidades são liberadas exclusivamente para:
-   - Contas administradoras (`role === 'ADMIN'`).
-   - O proprietário que criou o registro correspondente (onde `user.email === item.criadoPorEmail`).
+1. **Públicos**: Listagens (artistas, editais, eventos, espaços) exibem exclusivamente registros cujo `status === 'APROVADO'`.
+2. **Visitantes**: Não possuem login, logo navegam somente-leitura.
+3. **Roles (Papéis)**:
+   - **`ARTISTA`**: Pode criar seu perfil/portfólio, receber orçamentos, mapear espaços e publicar eventos.
+   - **`COLABORADOR`**: Um produtor cultural/morador que não cria portfólio, mas mapeia espaços, eventos e edita oportunidades.
+   - **`ADMIN`**: Tem privilégios de moderação.
+4. **Criação (Pendência)**: Tudo o que `ARTISTA` e `COLABORADOR` criam entra no banco com `status = 'PENDENTE'`, aguardando aprovação.
+5. **Moderação (Curadoria)**: O `ADMIN` utiliza a *ModeracaoPage* para ver listas de itens pendentes e clicar em [Aprovar] ou [Rejeitar] (escrevendo um motivo de devolução).
 
 ---
 
