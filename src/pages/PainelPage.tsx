@@ -1,16 +1,11 @@
 import { Alert, Badge, Button, Card, Label, Select, TextInput, Textarea } from "flowbite-react";
 import { useEffect, useState } from "react";
+import { compressImageToBase64 } from "../utils/imageCompression";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-const convertToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-  });
-};
+const convertToBase64 = (file: File): Promise<string> => compressImageToBase64(file);
+
 
 interface PainelPageProps {
   user: any;

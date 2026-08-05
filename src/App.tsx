@@ -148,24 +148,16 @@ export default function App() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const [rArtistas, rEspacos, rEventos, rOportunidades] = await Promise.all([
-          fetch(`${API_URL}/api/artistas`),
-          fetch(`${API_URL}/api/espacos`),
-          fetch(`${API_URL}/api/eventos`),
-          fetch(`${API_URL}/api/oportunidades`),
-        ]);
-        
-        const countArtistas = rArtistas.ok ? (await rArtistas.json()).length : 0;
-        const countEspacos = rEspacos.ok ? (await rEspacos.json()).length : 0;
-        const countEventos = rEventos.ok ? (await rEventos.json()).length : 0;
-        const countOportunidades = rOportunidades.ok ? (await rOportunidades.json()).length : 0;
-        
-        setStats({
-          artistas: countArtistas,
-          espacos: countEspacos,
-          eventos: countEventos,
-          oportunidades: countOportunidades
-        });
+        const response = await fetch(`${API_URL}/api/stats`);
+        if (response.ok) {
+          const data = await response.json();
+          setStats({
+            artistas: data.artistas || 0,
+            espacos: data.espacos || 0,
+            eventos: data.eventos || 0,
+            oportunidades: data.oportunidades || 0
+          });
+        }
       } catch (err) {
         console.error("Erro ao buscar estatísticas do ecossistema:", err);
       }

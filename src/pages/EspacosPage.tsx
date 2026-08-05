@@ -1,6 +1,7 @@
 import { Alert, Label, TextInput, ToggleSwitch } from "flowbite-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { authFetch } from "../App";
+import { compressImageToBase64 } from "../utils/imageCompression";
 import L from "leaflet";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
@@ -314,28 +315,24 @@ export default function EspacosPage({ user }: EspacosPageProps) {
     setSelectedEspaco(null);
     setError(null);
   }
-
-  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setMediaList((prev) => [
-          ...prev,
-          { url: base64String, caption: file.name },
-        ]);
-      };
-      reader.readAsDataURL(file);
-    });
-    e.target.value = "";
-  }
-
-
-
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files);
+      for (const file of files) {
+        try {
+          const base64 = await compressImageToBase64(file);
+          setMediaList((prev) => [
+            ...prev,
+            { url: base64, caption: mediaCaptionInput, mediaType: "IMAGE" },
+          ]);
+        } catch (error) {
+          console.error("Erro ao compactar imagem", error);
+        }
+      }
+      e.target.value = "";
+      setMediaCaptionInput("");
+    }
+  }  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setError(null);
     const payload = {
       nome, endereco, descricao, capacidade, latitude, longitude,
