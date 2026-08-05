@@ -1,6 +1,7 @@
-import { Alert, Label, TextInput, ToggleSwitch, Modal, ModalHeader, ModalBody, Button } from "flowbite-react";
+import { Alert, Label, TextInput, ToggleSwitch } from "flowbite-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { authFetch } from "../App";
+import L from "leaflet";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -138,8 +139,7 @@ export default function EspacosPage({ user }: EspacosPageProps) {
 
   /* ═══════ MAP INIT ═══════ */
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const L = (window as any).L;
+
     if (!L) return;
     const container = document.getElementById("espacos-map");
     if (!container) return;
@@ -202,7 +202,7 @@ export default function EspacosPage({ user }: EspacosPageProps) {
   /* ═══════ TILE SWITCH ═══════ */
   useEffect(() => {
     const m = mapRef.current;
-    const L = (window as any).L;
+
     if (!m || !L) return;
     if (tileRef.current) m.removeLayer(tileRef.current);
 
@@ -222,7 +222,7 @@ export default function EspacosPage({ user }: EspacosPageProps) {
   /* ═══════ MARKERS ═══════ */
   useEffect(() => {
     const m = mapRef.current;
-    const L = (window as any).L;
+
     if (!m || !L) return;
 
     markersRef.current.forEach((mk) => mk.remove());
