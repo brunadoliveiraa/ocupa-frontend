@@ -1,4 +1,4 @@
-import { Alert, Label, Select, TextInput } from "flowbite-react";
+import { Alert, Label, Select, TextInput, Modal, ModalHeader, ModalBody, Button } from "flowbite-react";
 import { useEffect, useState } from "react";
 import { authFetch } from "../App";
 
@@ -30,6 +30,7 @@ export default function EventosPage({ user }: EventosPageProps) {
   const [activePeriod, setActivePeriod] = useState<string>("");
   const [availablePeriods, setAvailablePeriods] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Details Modal State
   const [detailEvent, setDetailEvent] = useState<any | null>(null);
@@ -131,8 +132,10 @@ export default function EventosPage({ user }: EventosPageProps) {
 
       if (!res.ok) throw new Error("Erro ao salvar evento na agenda");
 
+      const isEdit = isEditing;
       resetForm();
       fetchData();
+      setSuccessMessage(isEdit ? "Evento atualizado com sucesso!" : "Evento salvo com sucesso!");
     } catch (err: any) {
       setError(err.message || "Erro ao salvar evento");
     }
@@ -164,7 +167,33 @@ export default function EventosPage({ user }: EventosPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="min-h-screen bg-white py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100 relative">
+      {successMessage && (
+        <div className="fixed inset-0 z-[5010] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-sm max-w-md w-full shadow-2xl border border-slate-900 dark:border-slate-800 p-8 text-center">
+            <div className="mx-auto mb-4 h-16 w-16 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+              <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+            <div className="mb-6 text-lg font-normal text-slate-600 dark:text-slate-300 flex flex-col gap-1">
+              <p>{successMessage}</p>
+              <p>Está <strong>PENDENTE</strong> de aprovação do Administrador.</p>
+              <p>Acompanhe o status em:</p>
+              <p className="font-semibold text-slate-900 dark:text-white mt-1 bg-slate-100 dark:bg-slate-800 py-2 px-3 rounded inline-block mx-auto">
+                Painel <span className="text-[#e76e3c] font-bold mx-1">➔</span> Minhas Contribuições
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSuccessMessage(null)}
+              className="bg-[#e76e3c] hover:bg-[#d65d2b] text-white font-display text-lg tracking-wider uppercase rounded-sm px-8 py-2 transition-colors cursor-pointer shadow-md"
+            >
+              Ok, entendi
+            </button>
+          </div>
+        </div>
+      )}
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* Header */}

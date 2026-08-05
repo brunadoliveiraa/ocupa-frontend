@@ -1,4 +1,4 @@
-import { Alert, Label, TextInput, ToggleSwitch } from "flowbite-react";
+import { Alert, Label, TextInput, ToggleSwitch, Modal, ModalHeader, ModalBody, Button } from "flowbite-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { authFetch } from "../App";
 
@@ -63,6 +63,7 @@ export default function EspacosPage({ user }: EspacosPageProps) {
   const [_mediaUrlInput, setMediaUrlInput] = useState("");
   const [mediaCaptionInput, setMediaCaptionInput] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   /* ═══════ FILTERED SPACES ═══════ */
   const filteredEspacos = useMemo(() => {
@@ -351,7 +352,10 @@ export default function EspacosPage({ user }: EspacosPageProps) {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Erro ao salvar espaço cultural");
-      resetForm(); fetchEspacos();
+      const isEdit = isEditing;
+      resetForm(); 
+      fetchEspacos();
+      setSuccessMessage(isEdit ? "Espaço atualizado com sucesso!" : "Espaço salvo com sucesso!");
     } catch (err: any) {
       setError(err.message || "Erro ao salvar espaço");
     }
@@ -443,6 +447,32 @@ export default function EspacosPage({ user }: EspacosPageProps) {
       `}</style>
 
       <div className="relative bg-white dark:bg-slate-950 overflow-hidden flex" style={{ height: "calc(100vh - 65px)" }}>
+        {successMessage && (
+          <div className="absolute inset-0 z-[2000] bg-black/60 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-900 dark:border-slate-600 rounded-sm max-w-md w-full shadow-2xl p-8 text-center">
+              <div className="mx-auto mb-4 h-16 w-16 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <div className="mb-6 text-lg font-normal text-slate-600 dark:text-slate-300 flex flex-col gap-1">
+                <p>{successMessage}</p>
+                <p>Está <strong>PENDENTE</strong> de aprovação do Administrador.</p>
+                <p>Acompanhe o status em:</p>
+                <p className="font-semibold text-slate-900 dark:text-white mt-1 bg-slate-100 dark:bg-slate-800 py-2 px-3 rounded inline-block mx-auto">
+                  Painel <span className="text-[#e76e3c] font-bold mx-1">➔</span> Minhas Contribuições
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSuccessMessage(null)}
+                className="bg-[#e76e3c] hover:bg-[#d65d2b] text-white font-display text-lg tracking-wider uppercase rounded-sm px-8 py-2 transition-colors cursor-pointer shadow-md"
+              >
+                Ok, entendi
+              </button>
+            </div>
+          </div>
+        )}
         {/* ═══════ MAP AREA ═══════ */}
         <div className="flex-1 relative min-w-0 h-full">
           <div id="espacos-map" className="w-full h-full" />
